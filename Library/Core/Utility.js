@@ -1,6 +1,9 @@
 
 var fs = require("fs"),
-    util = require("util");
+    util = require("util"),
+
+    JS_EXTENSION = "js",
+    NODE_EXTENSION = "node";
 
 exports.requireFolder = function(folder) {
   var files = fs.readdirSync(folder),
@@ -19,8 +22,8 @@ exports.requireFolder = function(folder) {
   for(index in files) {
     stats = fs.lstatSync(files[index]),
     fileParts = files[index].split('.'),
-    isJsFile = fileParts[fileParts.length - 1] === "js" ||
-               fileParts[fileParts.length - 1] === "node";
+    isJsFile = fileParts[fileParts.length - 1].toLowerCase() === JS_EXTENSION ||
+               fileParts[fileParts.length - 1].toLowerCase() === NODE_EXTENSION;
 
     if(stats.isFile() && isJsFile) {
       require(folder + files[index]);
@@ -50,13 +53,12 @@ exports.requireFolderRecursive = function(folder) {
       exports.requireFolderRecursive(file);
     } else if(stats.isFile()) {
       fileParts = file.split(".");
-      isJsFile = (fileParts[fileParts.length - 1] === "js") ||
-                 (fileParts[fileParts.length - 1] === "node");
+      isJsFile = (fileParts[fileParts.length - 1].toLowerCase() === JS_EXTENSION) ||
+                 (fileParts[fileParts.length - 1].toLowerCase() === NODE_EXTENSION);
 
       if(isJsFile) {
         fileName = file.split("/");
         fileName = fileName[fileName.length - 1];
-        util.log("requiring \"" + fileName + "\"");
         require(file);
       }
     }
@@ -86,7 +88,7 @@ exports.loadConfig = function() {
   inputString = inputString.replace(/(\r)+/gim, "");
 
   //get rid of extra spaces
-  inputString = inputString.replace(/[ ]+/gim, " ");
+  //inputString = inputString.replace(/[ ]+/gim, " ");
 
   //get lines
   inputLines = inputString.split("\n");
@@ -103,6 +105,10 @@ exports.loadConfig = function() {
     //ignore comments
     if(inputLines[index][0] !== '#') {
       currentLine = inputLines[index].split("=");
+
+      //should only be a left hand side and a right hand side
+      if(currentLine.length != 2) continue;
+
       resolveConfigProperty(currentLine[0], currentLine[1]);
     }
   }
@@ -110,7 +116,7 @@ exports.loadConfig = function() {
 
 function resolveConfigProperty(propertyString, propertyValue) {
   var base = COM.ClassObject.obtainNamespace("global.config"),
-      trail = propertyString.replace(/[ ]+/gim, "").split("."),
+      trail = propertyString.replace(/[ \t]+/gim, "").split("."),
       index;
 
   //follow the trail
@@ -121,6 +127,6 @@ function resolveConfigProperty(propertyString, propertyValue) {
   }
 
   if(propertyValue != null && propertyValue != undefined) {
-    base[trail[index]] = propertyValue.replace(/[ ]+/, "");
+    base[trail[index]] = propertyValue.replace(/[ \t]+/, "");
   }
 }

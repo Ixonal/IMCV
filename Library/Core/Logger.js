@@ -8,9 +8,9 @@ define("Logger").statics({
   useLog: false,
 
   MessageType: {
-    info: 1,
-    warn: 2,
-    error: 3
+    info: "Info",
+    warn: "Warning",
+    error: "Error"
   },
 
   updateWriteFlags: function() {
@@ -50,42 +50,94 @@ define("Logger").statics({
   },
 
   formatMessage: function(message, messageType) {
-    switch(messageType) {
-      case Logger.MessageType.info:
+    var currentTime = new Date(Date.now()),
+        timeStamp = (currentTime.getMonth() + 1) + "/" +
+                    currentTime.getDate() + "/" +
+                    (currentTime.getYear() + 1900) + " " +
+                    currentTime.getHours() + ":" +
+                    currentTime.getMinutes() + ":" +
+                    currentTime.getSeconds();
+    return (messageType + ": " + timeStamp + " - " + message);
 
-        break;
-      case Logger.MessageType.warn:
-
-        break;
-      case Logger.MessageType.error:
-
-        break;
-    }
+//    switch(messageType) {
+//      case Logger.MessageType.info:
+//
+//        break;
+//      case Logger.MessageType.warn:
+//
+//        break;
+//      case Logger.MessageType.error:
+//
+//        break;
+//    }
   },
 
   log: function(message) {
+    Logger.updateWriteFlags();
     message = Logger.formatMessage(message, Logger.MessageType.info);
-    console.log(message);
+
+    if(Logger.useConsole) {
+      console.log(message);
+    }
+    if(Logger.useLog) {
+      Logger.writeToLog(message);
+    }
   },
 
   info: function(message) {
+    Logger.updateWriteFlags();
     message = Logger.formatMessage(message, Logger.MessageType.info);
-    console.log(message);
+
+    if(Logger.useConsole) {
+      console.log(message);
+    }
+
+    if(Logger.useLog) {
+      Logger.writeToLog(message);
+    }
   },
 
   warn: function(message) {
+    Logger.updateWriteFlags();
     message = Logger.formatMessage(message, Logger.MessageType.warn);
-    console.warn(message);
+
+    if(Logger.useWarn) {
+      console.warn(message);
+    }
+
+    if(Logger.useLog) {
+      Logger.writeToLog(message);
+    }
+  },
+
+  warning: function(message) {
+    Logger.warn(message);
   },
 
   error: function(message) {
+    Logger.updateWriteFlags();
     message = Logger.formatMessage(message, Logger.MessageType.error);
-    console.error(message);
+
+    if(Logger.useError) {
+      console.error(message);
+    }
+
+    if(Logger.useLog) {
+      Logger.writeToLog(message);
+    }
+  },
+
+  err: function(message) {
+    Logger.error(message);
   },
 
   writeToLog: function(message) {
-    fs.open("", "a+", "0666", function(err, fd) {
-      fs.write(fd, message, 0, message.length, 0);
-    });
+    Logger.updateWriteFlags();
+
+    if(Logger.useLog) {
+      var logFile = fs.createWriteStream(constants.AppRoot + config.app.logging.log, {flags: 'a'});
+
+      logFile.write(message + "\n");
+    }
   }
 });

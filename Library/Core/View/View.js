@@ -1,5 +1,5 @@
 
-define("View").assign({
+define("Views.View").assign({
   viewFile: null,
   request: null,
   response: null,

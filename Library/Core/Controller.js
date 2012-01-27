@@ -13,7 +13,7 @@ define("Controller").assign({
   },
 
   render: function(viewFile) {
-    var view = new View(viewFile, this.request, this.response, this.viewData);
+    var view = new Views.View(viewFile, this.request, this.response, this.viewData);
 
     console.log("a controller is about to render");
     setTimeout(function() { view.render(); }, 1);
