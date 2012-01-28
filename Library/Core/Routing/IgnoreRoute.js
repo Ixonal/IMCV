@@ -15,8 +15,8 @@ define("Routing.IgnoreRoute").extend("Routing.Route").assign({
   },
 
   activate: function(request, response, routeInfo) {
-    Logger.log("ignoring a route");
-      response.end();
-      return;
+    //Logger.log("ignoring a route");
+    response.end();
+    return;
   }
 });

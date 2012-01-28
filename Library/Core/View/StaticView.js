@@ -16,7 +16,7 @@ define("Views.StaticView").extend("Views.View").assign({
 
   render: function() {
     var _this = this;
-    Logger.log("A static route has been initiated on " + this.viewFile);
+    //Logger.log("A static view has been initiated on " + this.viewFile);
 
     
 
@@ -25,15 +25,17 @@ define("Views.StaticView").extend("Views.View").assign({
       if(err == null) {
         if(stats.isDirectory()) {
           //print out the directory structure
-          Logger.log("got a directory, output structure");
+          //Logger.log("got a directory, output structure");
           _this.renderDirectory();
         } else {
           //output the file
-          Logger.log("got a file, output the file to the response");
+          //Logger.log("got a file, output the file to the response");
           _this.renderFile();
         }
       } else {
         //put a 404 thing here
+        Logger.error("File not found :( " + err);
+        _this.response.end();
       }
     });
 
@@ -47,7 +49,7 @@ define("Views.StaticView").extend("Views.View").assign({
         _this.response.write(data);
       } else {
         //put an error here.
-
+        Logger.error("The file could not be read: " + err.toString());
       }
 
       _this.response.end();
@@ -63,10 +65,9 @@ define("Views.StaticView").extend("Views.View").assign({
 
       if(!err) {
         with(namespace("Views.Helpers")) {
-          console.log(_this);
           //Logger.log("writing files to the response");
           for(index in files) {
-            anchor = new Anchor(_this.pathTo + "/" + files[index], files[index]);
+            anchor = new Anchor(escape(_this.pathTo + "/" + files[index]), files[index]);
             _this.response.write(anchor.toString() + "<br/>\n");
           }
         }

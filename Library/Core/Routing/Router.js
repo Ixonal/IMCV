@@ -10,11 +10,7 @@ define("Routing.Router").assign({
   },
 
   route: function(request, response) {
-    var selectedIndex,
-        controllerClass,
-        controller,
-        action,
-        args;
+    var selectedIndex;
 
     selectedIndex = this.resolve(request);
 
@@ -44,11 +40,18 @@ define("Routing.Router").assign({
     }
 
     return null;
-  },
+  }
+
+}).statics({
+  ROUTE_FILE: config.http.routes,
+
 
   //causes the browser to redirect to a different url
-  redirect: function(url) {
-
+  redirect: function(response, url) {
+    response.writeHead(302, {
+      Location: url
+    });
+    response.end();
   },
 
   //overrides the current route and runs a new url or
@@ -59,12 +62,12 @@ define("Routing.Router").assign({
       Logger.error("swapTo(url) not yet implemented");
     },
 
-    [Controller, Function],
+    [Control.Controller, Function],
     function(controller, action) {
       Logger.error("swapTo(controller, action) not yet implemented");
     },
 
-    [Controller, String],
+    [Control.Controller, String],
     function(controller, actionString) {
       Logger.error("swapTo(controller, actionString) not yet implemented");
     },
@@ -73,10 +76,8 @@ define("Routing.Router").assign({
     function(controllerString, actionString) {
       Logger.error("swapTo(controllerString, actionString) not yet implemented");
     }
-  )
+  ),
 
-}).statics({
-  ROUTE_FILE: config.http.routes,
 
   loadRoutes: function() {
     var routeText = fs.readFileSync(constants.AppRoot + config.http.routes).toString(),

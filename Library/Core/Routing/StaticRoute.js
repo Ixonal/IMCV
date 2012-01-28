@@ -58,12 +58,10 @@ define("Routing.StaticRoute").extend("Routing.Route").assign({
 
     for(index in otherPathParts) {
       actualPath += "/" + otherPathParts[index];
-      if(index < otherPathParts.length - 1) {
+      if(index < otherPathParts.length) {
         pathTo += "/" + otherPathParts[index];
       }
     }
-
-    console.log(this);
 
     setTimeout(function() { new Views.StaticView(actualPath, pathTo, request, response).render() }, 1);
   }
