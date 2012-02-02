@@ -3,7 +3,7 @@ require("./Route.js");
 
 var fs = require("fs");
 
-define("Routing.StaticRoute").extend("Routing.Route").assign({
+define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
   StaticRoute: function(method, path, operation) {
     this.Route(method, path, operation);
 
@@ -18,7 +18,8 @@ define("Routing.StaticRoute").extend("Routing.Route").assign({
   },
 
   samePathAs: function(otherPath) {
-    var otherPathParts = otherPath.split(/\//),
+    var variableReg = IMVC.Routing.Router.variableReg,
+        otherPathParts = otherPath.split(/\//),
         outputVals = {},
         index,
         currentPartMatches;
@@ -30,9 +31,9 @@ define("Routing.StaticRoute").extend("Routing.Route").assign({
     for(index in this.pathParts) {
       currentPartMatches = false;
 
-      if(this.pathParts[index].match(/[\{].+[\}]/)) {
+      if(this.pathParts[index].match(variableReg)) {
         currentPartMatches = true;
-        outputVals[this.pathParts[index].replace(/[\{](.+)[\}]/, "$1")] = otherPathParts[index];
+        outputVals[this.pathParts[index].replace(variableReg, "$1")] = otherPathParts[index];
       } else {
         if(this.pathParts[index] == otherPathParts[index]) {
           currentPartMatches = true;
@@ -63,6 +64,6 @@ define("Routing.StaticRoute").extend("Routing.Route").assign({
       }
     }
 
-    setTimeout(function() { new Views.StaticView(actualPath, pathTo, request, response).render() }, 1);
+    setTimeout(function() { new IMVC.Views.StaticView(actualPath, pathTo, request, response).render() }, 1);
   }
 });

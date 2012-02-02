@@ -2,7 +2,7 @@
 var fs = require("fs"),
     ejs = require("./ejs");
 
-define("Views.View").assign({
+define("IMVC.Views.View").assign({
   viewFile: null,
   request: null,
   response: null,
@@ -15,9 +15,7 @@ define("Views.View").assign({
     this.request = request;
     this.response = response;
     this.viewData = viewData;
-
-
-
+    
     this.viewFile = unescape(this.viewFile);
   },
 
@@ -44,25 +42,24 @@ define("Views.View").assign({
               callback(data.toString());
             } else {
               //couldn't read the file for some reason
-              Logger.error("Failed to read a file: " + _this.viewFile);
+              IMVC.Logger.error("Failed to read a file: " + _this.viewFile);
               _this.response.end();
             }
           });
         } else {
           //can't view it if it's not a file, do something error-like
-          Logger.error("Tried to view something that isn't a file: " + _this.viewFile);
+          IMVC.Logger.error("Tried to view something that isn't a file: " + _this.viewFile);
           _this.response.end();
         }
       } else {
         //the file isn't there, do something error-like
-        Logger.error("It doesn't appear the file " + _this.viewFile + " exists.");
+        IMVC.Logger.error("It doesn't appear the file " + _this.viewFile + " exists.");
         _this.response.end();
       }
     });
   },
 
   display: function(outputString) {
-    //console.log("displaying a view");
     this.response.end(outputString);
   }
 });

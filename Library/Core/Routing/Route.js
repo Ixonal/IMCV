@@ -1,5 +1,7 @@
 
-define("Routing.Route", "abstract").assign({
+require("./Router");
+
+define("IMVC.Routing.Route", "abstract").assign({
   method: null,
   path: null,
   pathParts: null,
@@ -13,16 +15,13 @@ define("Routing.Route", "abstract").assign({
     this.pathParts.splice(0, 1);
   },
 
-  equals: function(otherRoute) {
-    
-  },
-
   sameMethodAs: function(otherMethod) {
     return this.method.toLowerCase() == otherMethod.toLowerCase();
   },
 
   samePathAs: function(otherPath) {
     var outputVals = null,
+        variableReg = IMVC.Routing.Router.variableReg,
         otherPathParts = otherPath.split(/\//),
         index,
         currentPartMatches;
@@ -40,9 +39,9 @@ define("Routing.Route", "abstract").assign({
     for(index in otherPathParts) {
       currentPartMatches = false;
 
-      if(this.pathParts[index].match(/[\{].+[\}]/)) {
+      if(this.pathParts[index].match(variableReg)) {
         currentPartMatches = true;
-        outputVals[this.pathParts[index].replace(/[\{](.+)[\}]/, "$1")] = otherPathParts[index];
+        outputVals[this.pathParts[index].replace(variableReg, "$1")] = otherPathParts[index];
       } else {
         if(this.pathParts[index] == otherPathParts[index]) {
           currentPartMatches = true;

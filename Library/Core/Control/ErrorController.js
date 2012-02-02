@@ -1,7 +1,9 @@
 
 require("./Controller");
+require("../Routing/Router");
 
-define("Control.ErrorController").extend("Control.Controller").assign({
+
+define("IMVC.Controllers.ErrorController").extend("IMVC.Controllers.Controller").assign({
   ErrorController: function(request, response) {
     this.Controller(request, response);
   },
@@ -14,21 +16,26 @@ define("Control.ErrorController").extend("Control.Controller").assign({
     this.forbidden(requestArgs);
   },
 
+  500: function(requestArgs) {
+    this.internalServerError(requestArgs);
+  },
+
   fileNotFound: function(requestArgs) {
-//    Logger.error("not found not implemented (not found?)");
-
     this.response.writeHead(404);
-    this.render("Error/404.html", requestArgs);
-
-    //this.render("404.html");
-
-    //this.response.end("404 file not found");
+    this.render("/Error/404.html", requestArgs);
   },
 
   forbidden: function(requestArgs) {
-//    Logger.error("forbidden not implemented");
-//    this.response.end("403 forbidden");
     this.response.writeHead(403);
-    this.render("Error/403.html", requestArgs);
+    this.render("/Error/403.html", requestArgs);
+  },
+
+  internalServerError: function(requestArgs) {
+    this.response.writeHead(500);
+    this.response.end("500 internal server error");
   }
+}).statics({
+
+  //routes for errors are hard coded as /error/{errNumber}
+  errorRoute: ["GET /error/{errNumber} IMVC.Controllers.ErrorController.{errNumber}"]
 });

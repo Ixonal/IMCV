@@ -1,5 +1,6 @@
+var http = require("http");
 
-define("HomeController").extend("Control.Controller").assign({
+define("HomeController").extend("IMVC.Controllers.Controller").assign({
   HomeController: function(request, response) {
     this.Controller(request, response);
   },
@@ -13,10 +14,7 @@ define("HomeController").extend("Control.Controller").assign({
   },
 
   otherAction: function(requestArgs) {
-    //console.log(requestArgs);
+    this.response.redirect("IMVC.Controllers.ErrorController", "9001");
 
-    this.fileNotFound();
-
-    this.response.end("blaaahhhh!")
   }
 });

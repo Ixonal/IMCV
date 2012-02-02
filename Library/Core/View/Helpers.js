@@ -1,6 +1,6 @@
 
 
-define("Views.Helpers.Anchor").assign({
+define("IMVC.Views.Helpers.Anchor").assign({
   path: null,
   innerHtml: null,
   target: null,

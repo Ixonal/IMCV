@@ -1,5 +1,5 @@
 
-define("Control.Controller").assign({
+define("IMVC.Controllers.Controller").assign({
   actionName: null,
   request: null,
   response: null,
@@ -14,13 +14,36 @@ define("Control.Controller").assign({
   },
 
   fileNotFound: function() {
-    Routing.Router.redirect(this.response, "/error/404");
-    this.response.end();
+    //console.log(COM.ClassHierarchy.isObjectthis.response);
+    IMVC.Routing.Router.redirect(this.response, "IMVC.Controllers.ErrorController", "404");
+    //Routing.Router.redirect(this.response)
+
+    //this.response.end();
   },
 
   forbidden: function() {
-    Routing.Router.redirect(this.response, "/error/403");
-    this.response.end();
+    IMVC.Routing.Router.redirect(this.response, "IMVC.Controllers.ErrorController", "403");
+    //this.response.end();
+  },
+
+  renderJson: function(viewFile, viewData) {
+    if(viewData == undefined) viewData = null;
+
+    if(!viewFile || viewFile.length == 0) {
+      viewFile = this.actionName + ".json";
+    }
+
+    this.render(viewFile, viewData);
+  },
+
+  renderXml: function(viewFile, viewData) {
+    if(viewData == undefined) viewData = null;
+
+    if(!viewFile || viewFile.length == 0) {
+      viewFile = this.actionName + ".xml";
+    }
+
+    this.render(viewFile, viewData)
   },
 
   render: function(viewFile, viewData) {
@@ -45,7 +68,7 @@ define("Control.Controller").assign({
 
     }
 
-    view = new Views.View(viewFile, this.request, this.response, this.viewData);
+    view = new IMVC.Views.View(viewFile, this.request, this.response, this.viewData);
     //console.log("a controller is about to render");
     setTimeout(function() { view.render(); }, 1);
     //console.log("a controller is trying to render.");

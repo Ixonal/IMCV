@@ -1,7 +1,7 @@
 
 require("./Route.js");
 
-define("Routing.IgnoreRoute").extend("Routing.Route").assign({
+define("IMVC.Routing.IgnoreRoute").extend("IMVC.Routing.Route").assign({
   IgnoreRoute: function(method, path, operation) {
     this.Route(method, path, operation);
 
