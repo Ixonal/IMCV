@@ -718,6 +718,10 @@ COM.ClassHierarchy.classIsString = function(obj) {
 COM.ClassHierarchy.getClassName = function(classType) {
   var className = undefined;
 
+
+  if(typeof(classType) == "undefined") return "Undefined";
+  if(classType == null) return "Null";
+
   if(classType.getClassName) {
     className = classType.getClassName();
   } else if(classType.prototype && classType.prototype.getClassName) {

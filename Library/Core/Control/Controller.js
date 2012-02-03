@@ -13,17 +13,16 @@ define("IMVC.Controllers.Controller").assign({
     this.viewData = {};
   },
 
-  fileNotFound: function() {
-    //console.log(COM.ClassHierarchy.isObjectthis.response);
-    IMVC.Routing.Router.redirect(this.response, "IMVC.Controllers.ErrorController", "404");
-    //Routing.Router.redirect(this.response)
-
-    //this.response.end();
+  fileNotFound: function(requestArgs) {
+    this.response.redirect("IMVC.Controllers.Error", "404", requestArgs);
   },
 
-  forbidden: function() {
-    IMVC.Routing.Router.redirect(this.response, "IMVC.Controllers.ErrorController", "403");
-    //this.response.end();
+  forbidden: function(requestArgs) {
+    this.response.redirect("IMVC.Controllers.Error", "403", requestArgs);
+  },
+
+  internalServerError: function(requestArgs) {
+    IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", this.request, this.response, requestArgs);
   },
 
   renderJson: function(viewFile, viewData) {
@@ -48,7 +47,7 @@ define("IMVC.Controllers.Controller").assign({
 
   render: function(viewFile, viewData) {
     var viewRoot = constants.AppRoot + "/App/Views",
-        controllerName = this.getClassName().replace(/(\w+)controller/gi, "$1"),
+        controllerName = this.getClassName(),
         view;
 
     if(typeof(viewData) == "object") this.viewData = viewData;
@@ -70,7 +69,22 @@ define("IMVC.Controllers.Controller").assign({
 
     view = new IMVC.Views.View(viewFile, this.request, this.response, this.viewData);
     //console.log("a controller is about to render");
-    setTimeout(function() { view.render(); }, 1);
+    setTimeout(function() {
+      try {
+        view.render();
+      } catch(e) {
+        
+        switch(e.number) {
+          case 404:
+            view.response.redirect("IMVC.Controllers.Error", "404", view.viewData);
+            break;
+          case 500:
+          default:
+            IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", view.request, view.response, view.viewData);
+            break;
+        }
+      }
+    }, 1);
     //console.log("a controller is trying to render.");
   }
 });

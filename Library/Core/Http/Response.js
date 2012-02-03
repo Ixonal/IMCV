@@ -23,8 +23,17 @@ define("IMVC.Http.Response").assign({
 
     [String, String],
     function(controllerName, actionName) {
-      console.log(IMVC.Routing.Router.reverseRoute(controllerName, actionName));
       this.redirect(IMVC.Routing.Router.reverseRoute(controllerName, actionName));
+    },
+
+    [IMVC.Controllers.Controller, String, Object],
+    function(controller, actionName, otherData) {
+      this.redirect(IMVC.Routing.Router.reverseRoute(controller, actionName, otherData));
+    },
+
+    [String, String, Object],
+    function(controllerName, actionName, otherData) {
+      this.redirect(IMVC.Routing.Router.reverseRoute(controllerName, actionName, otherData));
     }
   ),
 

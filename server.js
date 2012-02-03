@@ -52,5 +52,14 @@ global.Server = http.createServer(function(request, response) {
 Server.listen(parseInt(config.http.port), config.http.host);
 
 
+
+Server.criticalError = function(response, message) {
+  IMVC.Logger.error("CRITICAL SERVER ERROR: " + message);
+  IMVC.Logger.error("NOW CLOSING THE SERVER.");
+  response.writeHead(500);
+  response.end(message);
+  Server.close();
+}
+
 IMVC.Logger.log("Server created!");
 IMVC.Logger.log("Awaiting connections on " + config.http.host + ":" + config.http.port);

@@ -22,8 +22,7 @@ define("IMVC.Routing.Router").assign({
     if(selectedIndex === null) {
       //throw an error here, 404
       IMVC.Logger.log("404 error");
-      response.end();
-      return;
+      response.redirect("IMVC.Controllers.Error", "404");
     }
 
     this.routes[selectedIndex.index].activate(request, response, selectedIndex);
@@ -54,40 +53,52 @@ define("IMVC.Routing.Router").assign({
 
   
 
-  //overrides the current route and runs a new url or
+  //overrides the current route and runs a new 
   //controller.action without notifying the browser
   swapTo: overload(
-    [String, IMVC.Http.Request, IMVC.Http.Response],
-    function(url, request, response) {
-      //Logger.error("swapTo(url) not yet implemented");
-      new IMVC.Routing.Router.route(request, response);
-    },
-
     [IMVC.Controllers.Controller, String, IMVC.Http.Request, IMVC.Http.Response],
     function(controllerClass, actionString, request, response) {
+      return IMVC.Routing.Router.swapTo(controllerClass, actionString, request, response, {});
+    },
+
+    [String, String, IMVC.Http.Request, IMVC.Http.Response],
+    function(controllerString, actionString, request, response) {
+      return IMVC.Routing.Router.swapTo(controllerString, actionString, request, response, {});
+    },
+
+    [IMVC.Controllers.Controller, String, IMVC.Http.Request, IMVC.Http.Response, Object],
+    function(controllerClass, actionString, request, response, requestVals) {
       var controller,
           action;
 
       try {
         controller = new controllerClass(request, response);
         action = controller[actionString];
+
+
+        if(!action) {
+          //throw some error here...
+        }
+
+        action.apply(controller, [requestVals]);
+
       } catch(e) {
-        
-        response.redirect("IMVC.Controllers.ErrorController", "404", {error: e});
+        if(controllerClass == IMVC.Controllers.ErrorController && actionString == "500") {
+          Server.criticalError(response, "Internal Server Error unreachable, " + e.toString());
+        } else {
+          IMVC.Routing.Router.swapTo("IMVC.Controllers.ErrorController", "500", request, response, requestVals);
+        }
         return;
       }
 
-      if(!action) {
-        //throw some error here...
-      }
 
-      setTimeout(function() { action.apply(controller, {}); }, 1);
     },
 
-    [String, String, IMVC.Http.Request, IMVC.Http.Response],
-    function(controllerString, actionString, request, response) {
+    [String, String, IMVC.Http.Request, IMVC.Http.Response, Object],
+    function(controllerString, actionString, request, response, requestVals) {
+
       var controller = COM.ClassObject.obtainNamespace(controllerString);
-      IMVC.Routing.Router.swapTo(controller, actionString, request, response);
+      IMVC.Routing.Router.swapTo(controller, actionString, request, response, requestVals);
     }
   ),
 

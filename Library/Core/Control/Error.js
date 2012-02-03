@@ -3,8 +3,8 @@ require("./Controller");
 require("../Routing/Router");
 
 
-define("IMVC.Controllers.ErrorController").extend("IMVC.Controllers.Controller").assign({
-  ErrorController: function(request, response) {
+define("IMVC.Controllers.Error").extend("IMVC.Controllers.Controller").assign({
+  Error: function(request, response) {
     this.Controller(request, response);
   },
 
@@ -32,10 +32,11 @@ define("IMVC.Controllers.ErrorController").extend("IMVC.Controllers.Controller")
 
   internalServerError: function(requestArgs) {
     this.response.writeHead(500);
-    this.response.end("500 internal server error");
+    this.render("/Error/500.html", requestArgs);
+    //this.response.end("500 internal server error");
   }
 }).statics({
 
   //routes for errors are hard coded as /error/{errNumber}
-  errorRoute: ["GET /error/{errNumber} IMVC.Controllers.ErrorController.{errNumber}"]
+  errorRoute: ["GET /error/{errNumber} IMVC.Controllers.Error.{errNumber}"]
 });

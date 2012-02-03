@@ -43,18 +43,21 @@ define("IMVC.Views.View").assign({
             } else {
               //couldn't read the file for some reason
               IMVC.Logger.error("Failed to read a file: " + _this.viewFile);
-              _this.response.end();
+              throw new Error(500, "Failed to read a file: " + _this.viewFile);
+              //_this.response.end();
             }
           });
         } else {
           //can't view it if it's not a file, do something error-like
           IMVC.Logger.error("Tried to view something that isn't a file: " + _this.viewFile);
-          _this.response.end();
+          throw new Error(500, "Tried to view something that isn't a file: " + _this.viewFile);
+          //_this.response.end();
         }
       } else {
         //the file isn't there, do something error-like
         IMVC.Logger.error("It doesn't appear the file " + _this.viewFile + " exists.");
-        _this.response.end();
+        throw new Error(404, "It doesn't appear the file " + _this.viewFile + " exists.");
+        //_this.response.end();
       }
     });
   },
