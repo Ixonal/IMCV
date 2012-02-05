@@ -6,12 +6,19 @@ define("IMVC.Controllers.Controller").assign({
   viewData: null,
 
   Controller: function(request, response) {
-    //Controller.allControllers[this.getClassName()] = this;
-
     this.request = request;
     this.response = response;
-    this.viewData = {};
+    this.viewLocals = {};
+
+    this.init = event();
+
+    this.preRender = event();
+
   },
+
+  init: null,
+
+  preRender: null,
 
   fileNotFound: function(requestArgs) {
     this.response.redirect("IMVC.Controllers.Error", "404", requestArgs);
@@ -46,8 +53,9 @@ define("IMVC.Controllers.Controller").assign({
   },
 
   render: function(viewFile, viewData) {
-    var viewRoot = constants.AppRoot + "/App/Views",
+    var viewRoot = IMVC.Views.View.viewRoot,
         controllerName = this.getClassName(),
+        _this = this,
         view;
 
     if(typeof(viewData) == "object") this.viewData = viewData;
@@ -67,20 +75,21 @@ define("IMVC.Controllers.Controller").assign({
 
     }
 
-    view = new IMVC.Views.View(viewFile, this.request, this.response, this.viewData);
-    //console.log("a controller is about to render");
+    this.preRender();
+
+    view = new IMVC.Views.View(viewFile, this.request, this.response);
     setTimeout(function() {
       try {
-        view.render();
+        view.render(_this.viewLocals);
       } catch(e) {
         
         switch(e.number) {
           case 404:
-            view.response.redirect("IMVC.Controllers.Error", "404", view.viewData);
+            view.response.redirect("IMVC.Controllers.Error", "404", _this.viewLocals);
             break;
           case 500:
           default:
-            IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", view.request, view.response, view.viewData);
+            IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", view.request, view.response, _this.viewLocals);
             break;
         }
       }

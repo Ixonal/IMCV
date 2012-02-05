@@ -73,12 +73,12 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
         throw new Error("Action " + this.operation.full + " does not exist.");
       }
 
+      controller.init();
+
       setTimeout(function() { action.apply(controller, args); }, 1);
       
     } catch(e) {
-      console.log("nothin good");
-      args.push(e);
-      IMVC.Routing.Router.swapTo("IMVC.Controllers.ErrorController", "500", request, response, args);
+      IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", request, response, {args: args[0], error: e});
     }
 
   }

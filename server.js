@@ -38,7 +38,7 @@ finalizeSubClass();
 
 
 //load in routes
-IMVC.Routing.Router.parseRoutes(IMVC.Controllers.ErrorController.errorRoute);
+IMVC.Routing.Router.parseRoutes(IMVC.Controllers.Error.errorRoute);
 IMVC.Routing.Router.loadRoutes();
 
 
@@ -46,7 +46,13 @@ IMVC.Routing.Router.loadRoutes();
 global.Server = http.createServer(function(request, response) {
   request = new IMVC.Http.Request(request);
   response = new IMVC.Http.Response(response);
-  setTimeout(function() { (new IMVC.Routing.Router()).route(request, response); }, 1);
+  setTimeout(function() {
+    //try {
+      (new IMVC.Routing.Router()).route(request, response);
+    //} catch(e) {
+      //Server.criticalError(response, e.toString());
+    //}
+  }, 1);
 });
 
 Server.listen(parseInt(config.http.port), config.http.host);

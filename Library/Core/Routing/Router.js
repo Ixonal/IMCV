@@ -75,23 +75,18 @@ define("IMVC.Routing.Router").assign({
         controller = new controllerClass(request, response);
         action = controller[actionString];
 
-
-        if(!action) {
-          //throw some error here...
-        }
-
+        controller.actionName = actionString;
+        controller.init();
         action.apply(controller, [requestVals]);
 
       } catch(e) {
         if(controllerClass == IMVC.Controllers.ErrorController && actionString == "500") {
           Server.criticalError(response, "Internal Server Error unreachable, " + e.toString());
         } else {
-          IMVC.Routing.Router.swapTo("IMVC.Controllers.ErrorController", "500", request, response, requestVals);
+          IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", request, response, {requestVals: requestVals, error: e});
         }
         return;
       }
-
-
     },
 
     [String, String, IMVC.Http.Request, IMVC.Http.Response, Object],
@@ -271,6 +266,20 @@ define("IMVC.Routing.Router").assign({
       return matchingRoutePath;
     }
   ),
+
+  constructQueryString: function(queryData) {
+    var index,
+        queryString = "?";
+
+    for(index in queryData) {
+      queryString += escape(index);
+      queryString += "=";
+      queryString += escape(queryData[index]);
+      queryString += "&";
+    }
+
+    return queryString.substring(0, queryString.length - 1);
+  },
 
   routes: []
 });

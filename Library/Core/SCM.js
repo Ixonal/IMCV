@@ -451,26 +451,28 @@ COM.SCM.SubClassManager.finalizeSubClass = function() {
 }
 
 //created to allow for a more class-like interface
-COM.ClassObject = function(className, isAbstract) {
+COM.ClassObject = function(classNamespace, className, isAbstract) {
   if(typeof(className) !== "string") {
     throw new Error("ClassObject needs a string class name");
   }
 
-  var _this = this;
+  var _this = this,
+      context = COM.ClassObject.obtainNamespace(classNamespace);
 
+  _this.classNamespace = classNamespace;
   _this.className = className;
   _this.classHierarchy = {};
 
   if(isAbstract) {
     //cannot create an instance of an abstract class
     //so an error is thrown indicating such
-    _this.classObj = global[className] = function() {
+    _this.classObj = context[className] = function() {
       throw new Error("Abstract classes cannot be instantiated.");
     }
   } else {
     //the actual javascript constructor will just call the
     //class's constructor with all the same arguments
-    _this.classObj = global[className] = function() {
+    _this.classObj = context[className] = function() {
       var _this = this,
           _that = _this[className],
           args = [],
@@ -574,14 +576,15 @@ COM.ClassObject.prototype = {
 
   //puts this class in a given namespace
   namespace: function(namespace) {
-    var context = COM.ClassObject.obtainNamespace(namespace); //the object context
-                                                              //of the given namespace
+    var classNamespace = COM.ClassObject.obtainNamespace(this.classNamespace),
+        context = COM.ClassObject.obtainNamespace(namespace);         //the object context
+                                                                      //of the given namespace
 
     //add the class to this namespace
     context[this.className] = this.classObj;
 
     //remove the class from the global namespace
-    delete global[this.className];
+    delete classNamespace[this.className];
 
     this.classNamespace = namespace;
 
@@ -880,7 +883,7 @@ COM.ClassObject.overloadWithTypes = function() {
           args[argIndex] = arguments[argIndex];
         }
 
-        return currentFunction.apply(this, args);
+        return currentFunction.apply(_this, args);
       }
     }
 
@@ -967,6 +970,8 @@ COM.ClassObject.obtainNamespace = function(namespace) {
     throw new Error("A namespace must be an object or string literal.");
   }
 
+  if(namespace.length == 0) return global;
+
   //split the namespace into parts and initialize 
   //the context to the global namespace
   nsParts = nsParts = namespace.split(".");
@@ -990,6 +995,42 @@ COM.ClassObject.obtainNamespace = function(namespace) {
   }
 
   return context;
+}
+
+COM.ClassObject.event = function() {
+  var _this = this,
+      eventObj;
+
+  eventObj = function() {
+    var index,
+        args = [];
+
+    for(index in arguments) {
+      args[index] = arguments[index];
+    }
+
+    for(index in eventObj.subscribedFunctions) {
+      if(typeof(eventObj.subscribedFunctions[index]) == "function") {
+        eventObj.subscribedFunctions[index].apply(_this, args);
+      }
+    }
+  }
+
+  eventObj.subscribedFunctions = {};
+
+  eventObj.subscribe = function(name, func) {
+    if(typeof(name) == "string" && typeof(func) == "function") {
+      eventObj.subscribedFunctions[name] = func;
+    }
+  }
+
+  eventObj.unsubscribe = function(name) {
+    if(typeof(name) == "string") {
+      delete eventObj.subscribedFunctions[name];
+    }
+  }
+
+  return eventObj;
 }
 
 
@@ -1058,10 +1099,7 @@ COM.ClassObject.define = function(classDesignation, isAbstract) {
   }
 
   //create the new class object
-  newClass = new COM.ClassObject(className, isAbstract);
-  if(hasNamespace) {
-    newClass.namespace(classNamespace);
-  }
+  newClass = new COM.ClassObject(classNamespace, className, isAbstract);
   return newClass;
 }
 
@@ -1072,6 +1110,8 @@ global["using"] = COM.ClassObject.using;
 global["unusing"] = COM.ClassObject.unusing;
 global["define"] = COM.ClassObject.define;
 global["destroy"] = COM.ClassObject.destroy;
+
+global["event"] = COM.ClassObject.event;
 
 //choose between two versions of overloading
 if((COMOptions.overloadType = COMOptions.overloadType || "typed") === "typed") {

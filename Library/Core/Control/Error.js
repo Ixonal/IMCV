@@ -32,7 +32,8 @@ define("IMVC.Controllers.Error").extend("IMVC.Controllers.Controller").assign({
 
   internalServerError: function(requestArgs) {
     this.response.writeHead(500);
-    this.render("/Error/500.html", requestArgs);
+    COM.SCM.SubClassTree.extend(this.viewLocals, requestArgs);
+    this.render("500.html");
     //this.response.end("500 internal server error");
   }
 }).statics({

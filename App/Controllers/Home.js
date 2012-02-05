@@ -14,10 +14,15 @@ define("Home").extend("IMVC.Controllers.Controller").assign({
   },
 
   otherAction: function(requestArgs) {
-    this.response.redirect("IMVC.Controllers.Error", "9001");
+
+    this.viewLocals.pie = "this is pie";
+    this.render();
+    //this.response.redirect("IMVC.Controllers.Error", "9001");
 
     //IMVC.Routing.Router.swapTo("IMVC.Controllers.ErrorController", "500", this.request, this.response, requestArgs);
     //this.internalServerError(requestArgs);
+
+    //IMVC.Logger.log(IMVC.Routing.Router.constructQueryString({name: "Bob Dole", "favorite food": "banana$"}));
 
     //this.response.end("well blah");
 
