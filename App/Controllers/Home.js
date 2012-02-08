@@ -15,6 +15,7 @@ define("Home").extend("IMVC.Controllers.Controller").assign({
 
   otherAction: function(requestArgs) {
 
+    this.viewLocals.something = "this is something";
     this.viewLocals.pie = "this is pie";
     this.render();
     //this.response.redirect("IMVC.Controllers.Error", "9001");

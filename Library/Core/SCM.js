@@ -997,9 +997,8 @@ COM.ClassObject.obtainNamespace = function(namespace) {
   return context;
 }
 
-COM.ClassObject.event = function() {
-  var _this = this,
-      eventObj;
+COM.ClassObject.event = function(context) {
+  var eventObj;
 
   eventObj = function() {
     var index,
@@ -1011,10 +1010,12 @@ COM.ClassObject.event = function() {
 
     for(index in eventObj.subscribedFunctions) {
       if(typeof(eventObj.subscribedFunctions[index]) == "function") {
-        eventObj.subscribedFunctions[index].apply(_this, args);
+        eventObj.subscribedFunctions[index].apply(context, args);
       }
     }
   }
+
+  context = context || this;
 
   eventObj.subscribedFunctions = {};
 
