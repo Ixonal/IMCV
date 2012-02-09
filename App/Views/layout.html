@@ -1,0 +1,22 @@
+
+<html>
+  <head>
+    <title><%=title%></title>
+
+    <link rel="stylesheet" type="text/css" href="/public/css/styles.css" />
+  </head>
+
+  <body>
+    <div class="Head"></div>
+    <div class="PrimaryContainer">
+      <div class="Title">
+        My IMVC Website
+      </div>
+      <div class="Content">
+        <%= include("/navigation.html") %>
+        <%= renderContent() %>
+      </div>
+    </div>
+    <div class="Foot"></div>
+  </body>
+</html>

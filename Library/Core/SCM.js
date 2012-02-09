@@ -883,7 +883,7 @@ COM.ClassObject.overloadWithTypes = function() {
           args[argIndex] = arguments[argIndex];
         }
 
-        return currentFunction.apply(_this, args);
+        return currentFunction.apply(this, args);
       }
     }
 

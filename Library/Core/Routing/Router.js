@@ -187,7 +187,7 @@ define("IMVC.Routing.Router").assign({
         controllerString = controllerName;
       }
 
-      return Routing.Router.reverseRoute(controllerString, actionString, otherInfo);
+      return IMVC.Routing.Router.reverseRoute(controllerString, actionString, otherInfo);
     },
     
     [String, String, Object],
@@ -205,7 +205,8 @@ define("IMVC.Routing.Router").assign({
           controllerResult,
           actionResult,
           controllerVars,
-          actionVars;
+          actionVars,
+          screenedVars = [];
 
       if(typeof(otherInfo) != "object") otherInfo = {};
 
@@ -261,7 +262,15 @@ define("IMVC.Routing.Router").assign({
         index = variableReg.exec(matchingRoutePath);
         index = index[1];
         matchingRoutePath = matchingRoutePath.replace(variableReg, otherInfo[index]);
+        screenedVars.push(index);
       }
+
+      for(index in screenedVars) {
+        delete otherInfo[index];
+      }
+
+      matchingRoutePath = matchingRoutePath + IMVC.Routing.Router.constructQueryString(otherInfo);
+
 
       return matchingRoutePath;
     }

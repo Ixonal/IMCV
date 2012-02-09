@@ -1,0 +1,62 @@
+
+body {
+  background: #CCCCDD;
+  margin: 0;
+}
+
+div.PrimaryContainer {
+  position: relative;
+  width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+div.PrimaryContainer div.Title {
+  width: 100%;
+  font: 35pt sans-serif;
+  font-weight: bold;
+  color: #EFEFEF;
+  text-align: center;
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+div.PrimaryContainer div.Content {
+  background: #EFEFFF;
+  border: 1px solid #CCCCDD;
+}
+
+div.PrimaryContainer div.Content div.Navigation {
+  border-bottom: 5px solid #555599;
+}
+
+div.PrimaryContainer div.Content div.Navigation div {
+  height: 26px;
+  margin-right: 2px;
+  display: inline-block;
+  background: #8888CC;
+  color: #FFFFFF;
+  padding-top: 4px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+div.Head {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100px;
+  background: #888888;
+  border-bottom: 2px solid #2233DD;
+}
+
+div.Foot {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+  height: 50px;
+  background: #888888;
+  border-top: 2px solid #2233DD;
+}

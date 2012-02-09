@@ -12,6 +12,10 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.View").assign({
     this.childViewPlaceHolder = "{childview" + this.childView.viewFile + "}";
   },
 
+  _ParentView: function() {
+    this._View();
+  },
+
   render: function(viewData) {
     var _this = this;
 

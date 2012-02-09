@@ -7,10 +7,17 @@ define("Home").extend("IMVC.Controllers.Controller").assign({
 
   Index: function(requestArgs) {
     //console.log("about to render index.html");
+    this.viewLocals.message = "Welcome to my brand new site!";
 
     this.render();
 
     //console.log("index.html is rendering");
+  },
+
+  About: function(requestArgs) {
+    this.viewLocals.message = "This website was created with IMVC!";
+
+    this.render();
   },
 
   otherAction: function(requestArgs) {

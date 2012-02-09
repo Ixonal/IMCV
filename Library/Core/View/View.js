@@ -37,7 +37,21 @@ define("IMVC.Views.View").assign({
     this.viewReady = event(this);
     this.viewReady.subscribe("onViewReady", this.onViewReady);
 
+    this.viewFinish = event(this);
+    this.viewFinish.subscribe("__destruction", function() {
+      //when finished, send the view to be destroyed
+      var _this = this;
+      
+      setTimeout(function() { destroy(_this); }, 1);
+    });
+
     this.viewFile = unescape(this.viewFile);
+  },
+
+  _View: function() {
+    if(this.parentView) {
+      destroy(this.parentView);
+    }
   },
 
   render: function(viewData) {
@@ -46,7 +60,7 @@ define("IMVC.Views.View").assign({
     viewData = viewData || {};
 
 
-
+    viewData.Helpers = IMVC.Views.Helpers;
 
     //includes the contents of a file into the current view
     viewData.include = function(file) {
@@ -103,7 +117,6 @@ define("IMVC.Views.View").assign({
         if(stats.isFile()) {
           fs.readFile(file, function(err, data) {
             if(!err) {
-              //_this.fileLoaded(file);
               callback(data.toString());
             } else {
               //couldn't read the file for some reason
@@ -199,6 +212,7 @@ define("IMVC.Views.View").assign({
 
     this.response.end(outputString);
     this.viewComplete = true;
+    this.viewFinish();
   }
 }).statics({
   viewRoot: constants.AppRoot + "/App/Views"

@@ -10,9 +10,14 @@ define("IMVC.Controllers.Controller").assign({
     this.response = response;
     this.viewLocals = {};
 
-    this.init = event();
+    this.init = event(this);
+    this.preRender = event(this);
+    this.finalize = event(this);
 
-    this.preRender = event();
+    this.finalize.subscribe("__destruction", function() {
+      var _this = this;
+      setTimeout(function() { destroy(_this) }, 1);
+    });
 
   },
 
@@ -81,6 +86,7 @@ define("IMVC.Controllers.Controller").assign({
     setTimeout(function() {
       try {
         view.render(_this.viewLocals);
+        _this.finalize();
       } catch(e) {
         
         switch(e.number) {
