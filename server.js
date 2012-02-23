@@ -40,18 +40,34 @@ finalizeSubClass();
 //load in routes
 IMVC.Routing.Router.parseRoutes(IMVC.Controllers.Error.errorRoute);
 IMVC.Routing.Router.loadRoutes();
+IMVC.Logger.log("Routes loaded.");
+
+
+//connect to the database
+try {
+if(config.db.connectionString) {
+  IMVC.Models.Model.connectToDatabase(config.connectionString);
+  IMVC.Logger.log("Connected to the database.");
+} else if(config.db.host && config.db.port && config.db.database) {
+  IMVC.Models.Model.connectToDatabase(config.db.host, config.db.database, config.db.port, {});
+  IMVC.Logger.log("Connected to the database.");
+}
+} catch(e) {
+  IMVC.Logger.error("Unable to connect to the database: " + e);
+}
 
 
 //set up the server
 global.Server = http.createServer(function(request, response) {
   request = new IMVC.Http.Request(request);
   response = new IMVC.Http.Response(response);
+  
   setTimeout(function() {
-    //try {
-      (new IMVC.Routing.Router()).route(request, response);
-    //} catch(e) {
-      //Server.criticalError(response, e.toString());
-    //}
+    try {
+      (new IMVC.Routing.Router()).route(new IMVC.Http.HttpContext(request, response));
+    } catch(e) {
+      Server.criticalError(response, e.toString());
+    }
   }, 1);
 });
 

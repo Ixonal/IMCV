@@ -2,10 +2,9 @@
 var fs = require("fs"),
     ejs = require("./ejs");
 
-define("IMVC.Views.View").assign({
+define("IMVC.Views.View", "abstract").assign({
   viewFile: null,
-  request: null,
-  response: null,
+  context: null,
   viewComplete: false,
 
   parentView: null,
@@ -19,95 +18,26 @@ define("IMVC.Views.View").assign({
 
   outputString: null,
 
-  View: function(viewFile, request, response) {
+  View: function(viewFile, context) {
     
     this.viewFile = viewFile;
-    this.request = request;
-    this.response = response;
+    this.context = context;
 
     this.loadingFiles = {};
     this.includes = {};
 
     this.fileLoaded = event(this);
-    this.fileLoaded.subscribe("onFileLoaded", this.onFileLoaded)
 
     this.fileIncluded = event(this);
-    this.fileIncluded.subscribe("onFileIncluded", this.onFileIncluded);
 
     this.viewReady = event(this);
-    this.viewReady.subscribe("onViewReady", this.onViewReady);
 
     this.viewFinish = event(this);
-    this.viewFinish.subscribe("__destruction", function() {
-      //when finished, send the view to be destroyed
-      var _this = this;
-      
-      setTimeout(function() { destroy(_this); }, 1);
-    });
 
     this.viewFile = unescape(this.viewFile);
   },
 
-  _View: function() {
-    if(this.parentView) {
-      destroy(this.parentView);
-    }
-  },
-
-  render: function(viewData) {
-    var _this = this;
-
-    viewData = viewData || {};
-
-
-    viewData.Helpers = IMVC.Views.Helpers;
-
-    //includes the contents of a file into the current view
-    viewData.include = function(file) {
-      //console.log("view include called");
-
-      file = IMVC.Views.View.viewRoot + file;
-
-      _this.fileIncluded(file);
-      if(typeof(_this.includes[file]) != "string") {
-        _this.loadFile(file, function(fileData) {
-
-          _this.includes[file] = (ejs.compile(fileData))(viewData);
-          _this.fileLoaded(file);
-        });
-      }
-
-
-      return "{" + file + "}";
-    }
-
-
-    //causes this view to be added to a specified other file
-    viewData.inherits = function(file) {
-      var viewDataCopy;
-      if(!_this.parentView) {
-        viewDataCopy = COM.SCM.SubClassTree.extend({}, viewData)
-        file = IMVC.Views.View.viewRoot + file;
-        _this.parentView = new IMVC.Views.ParentView(file, _this.request, _this.response, _this);
-        _this.parentView.render(viewDataCopy);
-      }
-
-      return "";
-    }
-
-
-
-    this.fileIncluded(this.viewFile);
-    this.loadFile(this.viewFile, function(fileData) {
-      try {
-        var ejsFunc = ejs.compile(fileData);
-        _this.outputString = ejsFunc(viewData);
-        _this.fileLoaded(_this.viewFile);
-      } catch(e) {
-        IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.request, _this.response, {error: e});
-      }
-    });
-  },
+  render: abstractFunction(Object),
 
   loadFile: function(file, callback) {
     var _this = this;
@@ -137,83 +67,13 @@ define("IMVC.Views.View").assign({
     });
   },
 
-  onFileIncluded: function(filename) {
-    this.loadingFiles[filename] = true;
-  },
+  finalizeOutput: abstractFunction(),
 
-  onFileLoaded: function(filename) {
-    var context = this;
-    delete this.loadingFiles[filename];
-
-    if(!this.viewComplete) {
-      //determine if we're ready to render...
-      if(this.ready()) {
-        do {
-          if(!context.ready()) return;
-        } while((context = context.parentView));
-        //well, everything should be ready...
-        this.onViewReady();
-        context = this;
-      }
-    }
-
-  },
-
-  onViewReady: function() {
-    if(this.parentView) {
-      this.parentView.viewReady();
-    }
-    this.finalizeOutput();
-    this.display(this.getHighestParentView().outputString);
-  },
-
-  getHighestParentView: function() {
-    var context = this;
-
-    while(context.parentView) {
-      context = context.parentView;
-    }
-
-    return context;
-  },
-
-  getLowestChildView: function() {
-    var context = this;
-
-    while(context.childView) {
-      context = context.childView;
-    }
-
-    return context;
-  },
-
-  ready: function() {
-    return Object.keys(this.loadingFiles).length == 0;
-  },
-
-  finalizeOutput: function() {
-    var variableReg = IMVC.Routing.Router.variableReg,
-        variableName;
-
-    while(variableReg.test(this.outputString)) {
-      variableName = (variableReg.exec(this.outputString))[1];
-      this.outputString = this.outputString.replace(variableReg, this.includes[variableName]);
-    }
-
-    if(this.parentView) {
-      this.parentView.finalizeOutput();
-    }
-
-    return this.outputString;
-  },
-
-  display: function(outputString) {
-    if(this.viewComplete) return;
-
-    this.response.end(outputString);
-    this.viewComplete = true;
-    this.viewFinish();
-  }
+  display: abstractFunction(String)
 }).statics({
-  viewRoot: constants.AppRoot + "/App/Views"
+  viewRoot: constants.AppRoot + "/App/Views",
+  
+  variableOpen: "*|",
+  variableEnd: "|*",
+  variableReg: /\*\|([^\|]+)\|\*/m
 });

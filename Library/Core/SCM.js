@@ -47,7 +47,7 @@ if(typeof(COMOptions.global) !== "undefined") {
 //mainly just for readability
 function Namespace(name) {
   this["__Namespace__"] = name;
-}
+};
 
 //set up the Class Object Manager namespace
 global["COM"] = global["COM"] || new Namespace("COM");
@@ -80,13 +80,13 @@ COM.namespace = function() {
   }
 
   return namespaceReferences;
-}
+};
 
 //the SubClassManager handles all inheritance and polymorphism concerns
 //contains a list of inheritance trees and list of all classes involved
 COM.SCM.SubClassManager = function() {
   return this.init();
-}
+};
 
 COM.SCM.SubClassManager.prototype = {
   trees: null,
@@ -197,7 +197,7 @@ COM.SCM.SubClassManager.prototype = {
       this.trees[index].initiateSubClassing(this.trees[index].root);
     }
   }
-}
+};
 
 
 //tree to keep sub classing in order
@@ -205,7 +205,7 @@ COM.SCM.SubClassTree = function(rootNode) {
   this.root = rootNode;
 
   return this;
-}
+};
 
 
 COM.SCM.SubClassTree.prototype = {
@@ -343,7 +343,7 @@ COM.SCM.SubClassTree.prototype = {
     //copy any overrides specific to this class (polymorphism section)
     COM.SCM.SubClassTree.extend(subClass.prototype, prototype);
   }
-}
+};
 
 //static function used to add all the elements from one array (or hash) to another
 COM.SCM.SubClassTree.extend = function() {
@@ -974,7 +974,7 @@ COM.ClassObject.obtainNamespace = function(namespace) {
 
   //split the namespace into parts and initialize 
   //the context to the global namespace
-  nsParts = nsParts = namespace.split(".");
+  nsParts = namespace.split(".");
   context = global;
 
   //set up the namespace path

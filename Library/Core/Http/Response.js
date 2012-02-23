@@ -45,20 +45,20 @@ define("IMVC.Http.Response").assign({
     return this.nodeResponse.writeHead(statusCode, reasonPhrase, headers);
   },
 
-  writeHeader: function() {
-
+  write: function(chunk, encoding) {
+    return this.nodeResponse.write(chunk, encoding);
   },
 
-  setHeader: function() {
-
+  setHeader: function(name, value) {
+    return this.nodeResponse.setHeader(name, value);
   },
 
-  getHeader: function() {
-
+  getHeader: function(name) {
+    return this.nodeResponse.getHeader(name);
   },
 
-  removeHeader: function() {
-
+  removeHeader: function(name) {
+    return this.nodeResponse.removeHeader(name);
   },
 
   write: function(data, encoding) {

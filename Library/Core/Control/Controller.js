@@ -1,13 +1,11 @@
 
 define("IMVC.Controllers.Controller").assign({
   actionName: null,
-  request: null,
-  response: null,
+  context: null,
   viewData: null,
 
-  Controller: function(request, response) {
-    this.request = request;
-    this.response = response;
+  Controller: function(context) {
+    this.context = context;
     this.viewLocals = {};
 
     this.init = event(this);
@@ -16,7 +14,11 @@ define("IMVC.Controllers.Controller").assign({
 
     this.finalize.subscribe("__destruction", function() {
       var _this = this;
-      setTimeout(function() { destroy(_this) }, 1);
+      setTimeout(function() { destroy(_this); }, 1);
+    });
+    
+    this.finalize.subscribe("__registerCookies", function() {
+      this.context.response.setHeader("Set-Cookie", this.context.cookies.toResponseHeader());
     });
 
   },
@@ -26,11 +28,11 @@ define("IMVC.Controllers.Controller").assign({
   preRender: null,
 
   fileNotFound: function(requestArgs) {
-    this.response.redirect("IMVC.Controllers.Error", "404", requestArgs);
+    this.context.response.redirect("IMVC.Controllers.Error", "404", requestArgs);
   },
 
   forbidden: function(requestArgs) {
-    this.response.redirect("IMVC.Controllers.Error", "403", requestArgs);
+    this.context.response.redirect("IMVC.Controllers.Error", "403", requestArgs);
   },
 
   internalServerError: function(requestArgs) {
@@ -54,7 +56,7 @@ define("IMVC.Controllers.Controller").assign({
       viewFile = this.actionName + ".xml";
     }
 
-    this.render(viewFile, viewData)
+    this.render(viewFile, viewData);
   },
 
   render: function(viewFile, viewData) {
@@ -82,20 +84,20 @@ define("IMVC.Controllers.Controller").assign({
 
     this.preRender();
 
-    view = new IMVC.Views.View(viewFile, this.request, this.response);
+    view = new IMVC.Views.ControllerView(viewFile, this.context);
     setTimeout(function() {
       try {
         view.render(_this.viewLocals);
         _this.finalize();
       } catch(e) {
-        
+        console.log(e);
         switch(e.number) {
           case 404:
             view.response.redirect("IMVC.Controllers.Error", "404", _this.viewLocals);
             break;
           case 500:
           default:
-            IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", view.request, view.response, _this.viewLocals);
+            IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.context, _this.viewLocals);
             break;
         }
       }

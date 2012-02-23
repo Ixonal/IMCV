@@ -40,13 +40,13 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
       currentVar = (variableReg.exec(action));
       if(currentVar == null) throw new Error("Action unmapped");
       else currentVar = currentVar[1];
-      action = action.replace(variableReg, routeVars[currentVar])
+      action = action.replace(variableReg, routeVars[currentVar]);
     }
 
     return action;
   },
 
-  activate: function(request, response, routeInfo) {
+  activate: function(context, routeInfo) {
     var controllerClass,
         controller,
         actionName,
@@ -57,7 +57,7 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
     args.push(COM.SCM.SubClassTree.extend(routeInfo.query, routeInfo.routeVars));
 
     try {
-      controllerClass = COM.ClassObject.obtainNamespace(this.resolveController(this.operation.controller, routeInfo.routeVars))
+      controllerClass = COM.ClassObject.obtainNamespace(this.resolveController(this.operation.controller, routeInfo.routeVars));
       actionName = this.resolveAction(this.operation.action, routeInfo.routeVars);
 
       if(controllerClass.__Namespace__) {
@@ -65,7 +65,7 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
         throw new Error("Controller " + this.operation.controller + " does not exist.");
       }
 
-      controller = new controllerClass(request, response);
+      controller = new controllerClass(context);
       controller.actionName = actionName;
       action = controller[actionName];
 
@@ -78,7 +78,7 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
       setTimeout(function() { action.apply(controller, args); }, 1);
       
     } catch(e) {
-      IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", request, response, {args: args[0], error: e});
+      IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {args: args[0], error: e});
     }
 
   }

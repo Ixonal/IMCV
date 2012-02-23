@@ -4,8 +4,7 @@ var url = require("url"),
 
     require("../Logger");
     require("./ControllerActionRoute");
-    require("../Http/Request");
-    require("../Http/Response");
+    require("../Http/HttpContext");
 
 define("IMVC.Routing.Router").assign({
   routes: null,
@@ -14,10 +13,10 @@ define("IMVC.Routing.Router").assign({
     this.routes = IMVC.Routing.Router.routes;
   },
 
-  route: function(request, response) {
+  route: function(context) {
     var selectedIndex;
 
-    selectedIndex = this.resolve(request);
+    selectedIndex = this.resolve(context.request);
 
     if(selectedIndex === null) {
       //throw an error here, 404
@@ -25,7 +24,7 @@ define("IMVC.Routing.Router").assign({
       response.redirect("IMVC.Controllers.Error", "404");
     }
 
-    this.routes[selectedIndex.index].activate(request, response, selectedIndex);
+    this.routes[selectedIndex.index].activate(context, selectedIndex);
 
     destroy(this);
   },
@@ -56,23 +55,23 @@ define("IMVC.Routing.Router").assign({
   //overrides the current route and runs a new 
   //controller.action without notifying the browser
   swapTo: overload(
-    [IMVC.Controllers.Controller, String, IMVC.Http.Request, IMVC.Http.Response],
-    function(controllerClass, actionString, request, response) {
-      return IMVC.Routing.Router.swapTo(controllerClass, actionString, request, response, {});
+    [IMVC.Controllers.Controller, String, IMVC.Http.HttpContext],
+    function(controllerClass, actionString, context) {
+      return IMVC.Routing.Router.swapTo(controllerClass, actionString, context, {});
     },
 
-    [String, String, IMVC.Http.Request, IMVC.Http.Response],
-    function(controllerString, actionString, request, response) {
-      return IMVC.Routing.Router.swapTo(controllerString, actionString, request, response, {});
+    [String, String, IMVC.Http.HttpContext],
+    function(controllerString, actionString, context) {
+      return IMVC.Routing.Router.swapTo(controllerString, actionString, context, {});
     },
 
-    [IMVC.Controllers.Controller, String, IMVC.Http.Request, IMVC.Http.Response, Object],
-    function(controllerClass, actionString, request, response, requestVals) {
+    [IMVC.Controllers.Controller, String, IMVC.Http.HttpContext, Object],
+    function(controllerClass, actionString, context, requestVals) {
       var controller,
           action;
 
       try {
-        controller = new controllerClass(request, response);
+        controller = new controllerClass(context);
         action = controller[actionString];
 
         controller.actionName = actionString;
@@ -81,27 +80,26 @@ define("IMVC.Routing.Router").assign({
 
       } catch(e) {
         if(controllerClass == IMVC.Controllers.ErrorController && actionString == "500") {
-          Server.criticalError(response, "Internal Server Error unreachable, " + e.toString());
+          Server.criticalError(context.response, "Internal Server Error unreachable, " + e.toString());
         } else {
-          IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", request, response, {requestVals: requestVals, error: e});
+          IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {requestVals: requestVals, error: e});
         }
         return;
       }
     },
 
-    [String, String, IMVC.Http.Request, IMVC.Http.Response, Object],
-    function(controllerString, actionString, request, response, requestVals) {
+    [String, String, IMVC.Http.HttpContext, Object],
+    function(controllerString, actionString, context, requestVals) {
 
       var controller = COM.ClassObject.obtainNamespace(controllerString);
-      IMVC.Routing.Router.swapTo(controller, actionString, request, response, requestVals);
+      IMVC.Routing.Router.swapTo(controller, actionString, context, requestVals);
     }
   ),
 
 
   loadRoutes: function() {
     var routeText = fs.readFileSync(constants.AppRoot + config.http.routes).toString(),
-        routeLines,
-        index;
+        routeLines;
 
     //oh god the fun with regular expressions!
 
@@ -115,7 +113,7 @@ define("IMVC.Routing.Router").assign({
     routeText = routeText.replace(/\r/gim, "");
 
     //remove extra newlines
-    routeText = routeText.replace(/\n*(.+)\n*/, "$1\n")
+    routeText = routeText.replace(/\n*(.+)\n*/, "$1\n");
 
     //remove any spare last newlines
     routeText = routeText.replace(/^(.*)(\n?)$/gim, "$1");

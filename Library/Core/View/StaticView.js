@@ -1,5 +1,5 @@
 
-require("./View.js");
+require("./View");
 
 var fs = require("fs");
 
@@ -7,11 +7,23 @@ var fs = require("fs");
 //with no changes made
 define("IMVC.Views.StaticView").extend("IMVC.Views.View").assign({
   pathTo: null,
+  filename: null,
 
-  StaticView: function(viewFile, pathTo, request, response) {
-    this.View(viewFile, request, response, null);
+  StaticView: function(viewFile, context) {
+    this.View(viewFile, context);
 
-    this.pathTo = pathTo;
+    if(viewFile.charAt(viewFile.length - 1) == "/") {
+      viewFile = viewFile.substr(0, viewFile.length - 1);
+      this.viewFile = viewFile;
+    }
+
+
+
+    this.pathTo = viewFile.substring(0, viewFile.lastIndexOf("/"));
+    this.filename = viewFile.substring(viewFile.lastIndexOf("/") + 1, viewFile.length);
+    //this.pathTo = pathTo;
+    console.log(this.pathTo);
+    console.log(this.filename);
   },
 
   render: function() {
@@ -24,18 +36,15 @@ define("IMVC.Views.StaticView").extend("IMVC.Views.View").assign({
 
       if(err == null) {
         if(stats.isDirectory()) {
-          //print out the directory structure
-          //Logger.log("got a directory, output structure");
           _this.renderDirectory();
         } else {
           //output the file
-          //Logger.log("got a file, output the file to the response");
           _this.renderFile();
         }
       } else {
         //put a 404 thing here
         IMVC.Logger.error("File not found :( " + err);
-        _this.response.end();
+        _this.context.response.end();
       }
     });
 
@@ -46,7 +55,7 @@ define("IMVC.Views.StaticView").extend("IMVC.Views.View").assign({
 
     fs.readFile(this.viewFile, function(err, data){
       if(!err) {
-        _this.response.write(data);
+        _this.context.response.write(data);
       } else {
         //put an error here.
         IMVC.Logger.error("The file could not be read: " + err.toString());
@@ -67,13 +76,13 @@ define("IMVC.Views.StaticView").extend("IMVC.Views.View").assign({
         with(namespace("IMVC.Views.Helpers")) {
           //Logger.log("writing files to the response");
           for(index in files) {
-            anchor = new Anchor(escape(_this.pathTo + "/" + files[index]), files[index]);
-            _this.response.write(anchor.toString() + "<br/>\n");
+            anchor = new Anchor(escape(_this.pathTo + "/" + files[index]), files[index], files[index]);
+            _this.context.response.write(anchor.toString() + "<br/>\n");
           }
         }
       } else {
         //put an error here...
-        IMVC.Logger.error(err);
+        IMVC.Logger.error(err.toString());
       }
 
       _this.response.end();

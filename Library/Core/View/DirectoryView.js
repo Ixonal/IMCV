@@ -1,8 +1,46 @@
 
-require("./StaticView.js");
+require("./View");
 
-define("IMVC.Views.DirectoryView").extend("IMVC.Views.StaticView").assign({
-  DirectoryView: function(viewFile, pathTo, request, response) {
-    this.StaticView(viewFile, pathTo, request, response);
+var fs = require("fs"),
+    ejs = require("./ejs");
+
+define("IMVC.Views.DirectoryView").extend("IMVC.Views.ControllerView").assign({
+  folder: null,
+
+  DirectoryView: function(viewFile, context) {
+    this.ControllerView(IMVC.Views.DirectoryView.DIRECTORY_VIEW_FILE, context);
+
+    this.folder = viewFile;
+  },
+
+  render: function(viewData) {
+    var _this = this;
+
+
+    viewData = viewData || {};
+
+    fs.readdir(this.folder, function(err, files) {
+      if(!err) {
+
+        viewData.files = files;
+        _this.loadFile(_this.viewFile, function(fileData) {
+          _this.display((ejs.compile(fileData))(viewData));
+        });
+
+      } else {
+        IMVC.Logger.error(err.toString());
+        IMVC.Routing.Router.swapTo("IMVC.Controller.Error", "500", _this.request, _this.response, {error: "View file is not a file."});
+      }
+
+    });
+  },
+
+  finalizeOutput: function() {},
+
+  display: function(outputString) {
+    this.context.response.end(outputString);
+    this.viewComplete = true;
   }
+}).statics({
+  DIRECTORY_VIEW_FILE: constants.AppRoot + "/Library/Core/View/Directory.html"
 });

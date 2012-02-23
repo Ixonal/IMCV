@@ -1,15 +1,18 @@
+
+require("./View");
+
 var ejs = require("./ejs");
 
-define("IMVC.Views.ParentView").extend("IMVC.Views.View").assign({
+define("IMVC.Views.ParentView").extend("IMVC.Views.ControllerView").assign({
   childView: null,
   childViewPlaceholder: null,
 
-  ParentView: function(viewFile, request, response, childView) {
-    this.View(viewFile, request, response);
+  ParentView: function(viewFile, context, childView) {
+    this.ControllerView(viewFile, context);
 
     this.childView = childView;
 
-    this.childViewPlaceHolder = "{childview" + this.childView.viewFile + "}";
+    this.childViewPlaceHolder = IMVC.Views.View.variableOpen + "childview" + this.childView.viewFile + IMVC.Views.View.variableEnd;
   },
 
   _ParentView: function() {
@@ -36,28 +39,28 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.View").assign({
       }
 
 
-      return "{" + file + "}";
-    }
+      return IMVC.Views.View.variableOpen + file + IMVC.Views.View.variableEnd;
+    };
 
 
     //causes this view to be added to a specified other file
     viewData.inherits = function(file) {
       var viewDataCopy;
       if(!_this.parentView) {
-        viewDataCopy = COM.SCM.SubClassTree.extend({}, viewData)
+        viewDataCopy = COM.SCM.SubClassTree.extend({}, viewData);
         file = IMVC.Views.View.viewRoot + file;
         _this.parentView = new IMVC.Views.ParentView(file, _this.request, _this.response, _this);
         _this.parentView.render(viewDataCopy);
       }
 
       return "";
-    }
+    };
 
 
     //renders the content from a child view into this view
     viewData.renderContent = function() {
       return _this.childViewPlaceholder;
-    }
+    };
 
 
 
@@ -104,7 +107,7 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.View").assign({
   },
 
   finalizeOutput: function() {
-    var variableReg = IMVC.Routing.Router.variableReg,
+    var variableReg = IMVC.Views.View.variableReg,
         variableName;
 
     if(this.childView) {

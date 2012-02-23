@@ -25,5 +25,5 @@ define("IMVC.Views.Helpers.Anchor").assign({
     }
     return "<a href=\"" + this.path + "\"" + titleText + targetText + ">" + this.innerHtml + "</a>";
   }
-})
+});
 

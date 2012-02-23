@@ -51,11 +51,12 @@ define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
     return outputVals;
   },
 
-  activate: function(request, response, routeInfo) {
+  activate: function(context, routeInfo) {
     var pathTo = this.path,
         actualPath = constants.AppRoot + this.operation.directory,
         otherPathParts = routeInfo.routeVars.additionalParts,
-        index;
+        index,
+        stats;
 
     for(index in otherPathParts) {
       actualPath += "/" + otherPathParts[index];
@@ -64,6 +65,21 @@ define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
       }
     }
 
-    setTimeout(function() { new IMVC.Views.StaticView(actualPath, pathTo, request, response).render() }, 1);
+    if(pathTo.lastIndexOf("/") == pathTo.length - 1) {
+      pathTo = pathTo.substr(0, pathTo.length - 1);
+    }
+
+    stats = fs.statSync(unescape(actualPath));
+
+    if(stats.isDirectory()) {
+      setTimeout(function() { new IMVC.Views.DirectoryView(actualPath, context).render({pathTo: pathTo}) }, 1);
+    } else if(stats.isFile()) {
+      setTimeout(function() { new IMVC.Views.FileView(actualPath, context).render() }, 1);
+    } else {
+      //well then wtf is it?
+
+    }
+
+    
   }
 });

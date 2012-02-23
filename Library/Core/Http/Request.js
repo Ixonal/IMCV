@@ -38,5 +38,5 @@ define("IMVC.Http.Request").assign({
   resume: function() {
     return this.nodeRequest.resume();
   }
-})
+});
 

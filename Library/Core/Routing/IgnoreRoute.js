@@ -14,9 +14,9 @@ define("IMVC.Routing.IgnoreRoute").extend("IMVC.Routing.Route").assign({
 
   },
 
-  activate: function(request, response, routeInfo) {
+  activate: function(context, routeInfo) {
     //Logger.log("ignoring a route");
-    response.end();
+    context.response.end();
     return;
   }
 });

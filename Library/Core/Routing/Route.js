@@ -1,6 +1,8 @@
 
 require("./Router");
 
+require("../Http/HttpContext");
+
 define("IMVC.Routing.Route", "abstract").assign({
   method: null,
   path: null,
@@ -54,5 +56,5 @@ define("IMVC.Routing.Route", "abstract").assign({
     return outputVals;
   },
 
-  activate: abstractFunction(Object)
+  activate: abstractFunction(IMVC.Http.HttpContext, Object)
 });

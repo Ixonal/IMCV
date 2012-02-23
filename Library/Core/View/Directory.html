@@ -1,11 +1,17 @@
 
 <html>
   <head>
-    <title>Error 403: Forbidden</title>
+    <title><%= pathTo %></title>
   </head>
 
   <body>
-    <h1>Error 403</h1>
-    Forbidden.
+    <h1>Directory: <%=pathTo%></h1>
+    <hr/>
+    <a href="<%=pathTo%>/.." title="Up one level">Up one level</a><br/><br/>
+    <% for(var index in files) {
+         var fullPath = pathTo + "/" + files[index];
+    %>
+    <a href="<%=fullPath%>" title="<%=files[index]%>"><%=files[index]%></a><br/>
+    <% } %>
   </body>
 </html>
