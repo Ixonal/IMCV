@@ -14,7 +14,16 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
     if(!this._encrypted) {
       throw new Error("The cookie is not yet encrypted.");
     }
-    var decypher = crypto.createDecipher(config.http.cookies.encryption.algorithm || "AES256", config.http.cookies.encryption.key || "SOME_KEY"),
+    
+    //just to make sure these things are in there
+    if(!config.http) config.http = {};
+    if(!config.http.cookies) config.http.cookies = {};
+    if(!config.http.cookies.encryption) config.http.cookies.encryption = {};
+    if(!config.http.cookies.encryption.algorithm) config.http.cookies.encryption.algorithm = "AES256";
+    if(!config.http.cookies.encryption.key) config.http.cookies.encryption.key = "SOME_KEY";
+      
+      
+    var decypher = crypto.createDecipher(config.http.cookies.encryption.algorithm, config.http.cookies.encryption.key),
         decypheredValue = "";
     
     try {
@@ -34,6 +43,13 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
     if(this._encrypted) {
       throw new Error("The cookie is already encrypted.");
     } 
+    
+  //just to make sure these things are in there
+    if(!config.http) config.http = {};
+    if(!config.http.cookies) config.http.cookies = {};
+    if(!config.http.cookies.encryption) config.http.cookies.encryption = {};
+    if(!config.http.cookies.encryption.algorithm) config.http.cookies.encryption.algorithm = "AES256";
+    if(!config.http.cookies.encryption.key) config.http.cookies.encryption.key = "SOME_KEY";
     
     var cypher = crypto.createCipher(config.http.cookies.encryption.algorithm || "AES256", config.http.cookies.encryption.key || "SOME_KEY"),
         newVal = "";

@@ -14,7 +14,7 @@ define("IMVC.Http.HttpContext").assign({
     
     this.cookies = new IMVC.Http.CookieJar(this);
     
-    var CID = this.cookies.get("IMVC_CLIENT_ID");
+    var CID = this.cookies.get(IMVC.Http.HttpContext.clientId);
     
     if(!CID) {
       var hasher = crypto.createHash("SHA512"),
@@ -34,12 +34,17 @@ define("IMVC.Http.HttpContext").assign({
       
       hasher.update(CIDValue);
       
-      CID = this.cookies.add(new IMVC.Http.EncryptedCookie("IMVC_CLIENT_ID", hasher.digest("hex")));
+      CID = this.cookies.add(new IMVC.Http.EncryptedCookie(IMVC.Http.HttpContext.clientId, hasher.digest("hex"))).getValue();
     }
     
-    this.session = new IMVC.Http.Session(this, CID.getValue());
+    this.session = new IMVC.Http.Session(this, CID);
     
+  },
+  
+  getClientId: function() {
+    return this.cookies.get(IMVC.Http.HttpContext.clientId);
   }
 }).statics({
-  hasher: crypto.createHash("SHA512")
+  hasher: crypto.createHash("SHA512"),
+  clientId: (config.app.name || "default").replace(/\s+/gm, "_") + "_IMVC_CLIENT_ID"
 });

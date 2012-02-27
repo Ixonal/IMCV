@@ -30,7 +30,7 @@ require("./Cookie");
 
 
 define("IMVC.Http.CookieJar").assign({
-  crypto: crypto,
+  //crypto: crypto,
   context: null,
   cookies: null,
   
@@ -91,16 +91,47 @@ define("IMVC.Http.CookieJar").assign({
       cookie = this.cookies[index];
       
       if(cookie._modified) {
-        responseHeader.push(cookie.getTypeCode() + 
-                            CookieJar.TYPE_DELIMITER + 
-                            cookie.getKey() + 
-                            CookieJar.ASSIGNMENT_DELIMITER + 
-                            cookie.getResponseVal() + 
-                            CookieJar.FIELD_DELIMITER + 
-                            "expires" +
-                            CookieJar.ASSIGNMENT_DELIMITER + 
-                            cookie._expires.toGMTString()) + 
-                            CookieJar.FIELD_DELIMITER;
+        var cookieString = cookie.getTypeCode() + 
+                           CookieJar.TYPE_DELIMITER + 
+                           cookie.getKey() + 
+                           CookieJar.ASSIGNMENT_DELIMITER + 
+                           cookie.getResponseVal() + 
+                           CookieJar.FIELD_DELIMITER;
+        
+        if(cookie._expires && cookie._expires.constructor === Date) {
+          cookieString += "Expires" +
+                          CookieJar.ASSIGNMENT_DELIMITER + 
+                          cookie._expires.toGMTString() + 
+                          CookieJar.FIELD_DELIMITER;
+        }
+        
+        if(typeof(cookie._domain) === "string") {
+          cookieString += "Domain" + 
+                          CookieJar.ASSIGNMENT_DELIMITER + 
+                          cookie._domain + 
+                          CookieJar.FIELD_DELIMITER;
+        }
+        
+        if(typeof(cookie._path) === "string") {
+          cookieString += "Path" + 
+                          CookieJar.ASSIGNMENT_DELIMITER + 
+                          cookie._path + 
+                          CookieJar.FIELD_DELIMITER;
+        }
+        
+        if(cookie._secure) {
+          cookieString += "Secure" + 
+                          CookieJar.FIELD_DELIMITER;
+        }
+        
+        if(cookie._httpOnly) {
+          cookieString += "HttpOnly" + 
+                          CookieJar.FIELD_DELIMITER;
+        }
+        
+        //console.log(cookieString);
+
+        responseHeader.push(cookieString);
       }
     }
     
@@ -110,10 +141,17 @@ define("IMVC.Http.CookieJar").assign({
   get: function(id) {
     
     if(this.cookies[id]) {
-      return this.cookies[id];
+      return this.cookies[id].getValue();
     }
     
-    return this.loadCookie(id);
+    this.loadCookie(id)
+    
+    if(this.cookies[id]) {
+      return this.cookies[id].getValue();
+    } else {
+      return null;      
+    }
+    
   },
   
   loadCookie: function(id) {
@@ -160,10 +198,11 @@ define("IMVC.Http.CookieJar").assign({
         
         newCookie._modified = false;
         this.cookies[cookieName] = newCookie;
-        
+
         break;
       }
     }
+    
     
     return newCookie;
     
@@ -177,14 +216,14 @@ define("IMVC.Http.CookieJar").assign({
   },
   
   add: function(cookie) {
-    if(this.cookies[cookie.id]) return this.set(cookie.key, cookie.value);
+    if(this.cookies[cookie.getKey()]) return this.set(cookie.getKey(), cookie.getValue());
     
-    this.cookies[cookie.id] = cookie;
+    this.cookies[cookie.getKey()] = cookie;
     return cookie;
   }
 }).statics({
-  TYPE_DELIMITER: "_",
+  TYPE_DELIMITER: "||",
   ASSIGNMENT_DELIMITER: "=",
-  FIELD_DELIMITER: ";"
+  FIELD_DELIMITER: "; "
 });
 

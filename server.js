@@ -3,6 +3,48 @@
 //require("./Library/Core/SCM-min");
 require("./Library/Core/SCM");
 
+global.ServerEvents = new COM.Namespace("ServerEvents");
+global.ServerEvents.coreLibraryLoaded = event();
+global.ServerEvents.appLoaded = event();
+global.ServerEvents.classesReady = event();
+global.ServerEvents.routesLoaded = event();
+global.ServerEvents.connectedToDatabase = event();
+global.ServerEvents.serverCreated = event();
+global.ServerEvents.connectionReceived = event();
+global.ServerEvents.caughtError = event();
+global.ServerEvents.serverExit = event();
+global.ServerEvents.appReady = event();
+
+ServerEvents.coreLibraryLoaded.subscribe("coreLoaded", function() {
+  IMVC.Logger.log("Core library loaded.");
+});
+
+ServerEvents.appLoaded.subscribe("appLoaded", function() {
+  IMVC.Logger.log("App code loaded.");
+});
+
+ServerEvents.routesLoaded.subscribe("routesLoaded", function() {
+  IMVC.Logger.log("Routes loaded.");
+});
+
+ServerEvents.connectedToDatabase.subscribe("databaseConnected", function() {
+  IMVC.Logger.log("Connected to the database.");
+});
+
+ServerEvents.caughtError.subscribe("caughtError", function(err) {
+  IMVC.Logger.error(err.stack);
+});
+
+ServerEvents.serverExit.subscribe("serverExit", function() {
+  IMVC.Logger.log("Server shutting down.");
+});
+
+ServerEvents.appReady.subscribe("appReady", function() {
+  IMVC.Logger.log("Server created!");
+  IMVC.Logger.log("Awaiting connections on " + config.http.host + ":" + config.http.port);
+});
+
+
 var http = require("http"),
     url = require("url"),
     fs = require("fs"),
@@ -26,31 +68,32 @@ global.constants.IsProd = (config.app.environment.toLowerCase() === "prod");
 //include all core files
 utility.requireFolderRecursive(global.constants.AppRoot + config.app.library.root);
 
-IMVC.Logger.log("Core library loaded.");
+ServerEvents.coreLibraryLoaded();
 
 //include every other file
 utility.requireFolderRecursive(fs.realpathSync("."));
 
-IMVC.Logger.log("App code loaded.")
+ServerEvents.appLoaded();
 
 //invokes the sub-class manager
 finalizeSubClass();
 
+ServerEvents.classesReady();
 
 //load in routes
 IMVC.Routing.Router.parseRoutes(IMVC.Controllers.Error.errorRoute);
 IMVC.Routing.Router.loadRoutes();
-IMVC.Logger.log("Routes loaded.");
 
+ServerEvents.routesLoaded();
 
 //connect to the database
 try {
 if(config.db.connectionString) {
   IMVC.Models.Model.connectToDatabase(config.connectionString);
-  IMVC.Logger.log("Connected to the database.");
+  ServerEvents.connectedToDatabase();
 } else if(config.db.host && config.db.port && config.db.database) {
   IMVC.Models.Model.connectToDatabase(config.db.host, config.db.database, config.db.port, {});
-  IMVC.Logger.log("Connected to the database.");
+  ServerEvents.connectedToDatabase();
 }
 } catch(e) {
   IMVC.Logger.error("Unable to connect to the database: " + e);
@@ -62,17 +105,20 @@ global.Server = http.createServer(function(request, response) {
   request = new IMVC.Http.Request(request);
   response = new IMVC.Http.Response(response);
   
-  setTimeout(function() {
+  ServerEvents.connectionReceived(request, response);
+  
+  process.nextTick(function() {
     try {
       (new IMVC.Routing.Router()).route(new IMVC.Http.HttpContext(request, response));
     } catch(e) {
       Server.criticalError(response, e.toString());
     }
-  }, 1);
+  });
 });
 
 Server.listen(parseInt(config.http.port), config.http.host);
 
+ServerEvents.serverCreated();
 
 
 Server.criticalError = function(response, message) {
@@ -81,7 +127,23 @@ Server.criticalError = function(response, message) {
   response.writeHead(500);
   response.end(message);
   Server.close();
+  process.kill(process.pid);
 }
 
-IMVC.Logger.log("Server created!");
-IMVC.Logger.log("Awaiting connections on " + config.http.host + ":" + config.http.port);
+Server.on("close", function() {
+  ServerEvents.serverExit();
+});
+
+process.on("uncaughtException", function (err) {
+  ServerEvents.caughtError(err);
+});
+
+process.on("exit", function() {
+  ServerEvents.serverExit();
+});
+
+//process.on("SIGINT", function() {
+//  ServerEvents.serverExit();
+//});
+
+ServerEvents.appReady();

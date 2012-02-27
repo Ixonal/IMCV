@@ -15,13 +15,16 @@ define("IMVC.Http.Cookie").extend("IMVC.Utility.KeyValuePair").assign({
     this.KeyValuePair(key, value);
     
     //by default, will expire after a week
-    if(typeof(expires) !== "number") {
-      expires = 1000 * 60 * 60 * 24 * 7;
-    }
+//    if(typeof(expires) !== "number") {
+//      expires = 1000 * 60 * 60 * 24 * 7;
+//    }
     
     this._modified = true;
-    this._expires = new Date();
-    this._expires.setTime(this._expires.getTime() + expires);
+    
+    if(expires) {
+      this._expires = new Date();
+      this._expires.setTime(this._expires.getTime() + expires);
+    }
   },
   
   getResponseVal: function() {

@@ -23,17 +23,24 @@ define("IMVC.Http.Session").assign({
   set: function(key, value) {
     if(!this._userSession[key]) return this.add(new IMVC.Http.SessionEntry(key, value));
     
-    return this._userSession[key];
+    return this._userSession[key].setValue(value);
   },
   
   get: function(key) {
-    return this._userSession[key];
+    if(this._userSession[key]) {
+      return this._userSession[key].getValue();
+    } else {
+      return null;
+    }
   },
   
   remove: function(key) {
     delete this._userSession[key];
   }
 }).statics({
-  globalSession: {}
+  globalSession: {},
+  persistSession: ServerEvents.serverExit.subscribe(function() {
+    console.log("should persist the session state here...");
+  })
 });
 

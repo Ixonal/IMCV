@@ -35,12 +35,12 @@ if(!global) {
   var global;
 }
 
-if(typeof(COMOptions.global) !== "undefined") {
-  global = COMOptions.global;
-} else if(typeof(GLOBAL) !== "undefined") {
+if(typeof(GLOBAL) !== "undefined") {
   global = GLOBAL;
 } else if(typeof(window) !== "undefined") {
   global = window;
+} else if(typeof(COMOptions.global) !== "undefined") {
+  global = COMOptions.global;
 }
 
 //Namespace type
@@ -1010,7 +1010,7 @@ COM.ClassObject.event = function(context) {
 
     for(index in eventObj.subscribedFunctions) {
       if(typeof(eventObj.subscribedFunctions[index]) == "function") {
-        eventObj.subscribedFunctions[index].apply(context, args);
+        eventObj.subscribedFunctions[index].apply(context || this, args);
       }
     }
   }
@@ -1023,6 +1023,8 @@ COM.ClassObject.event = function(context) {
     if(typeof(name) == "string" && typeof(func) == "function") {
       eventObj.subscribedFunctions[name] = func;
     }
+    
+    return func;
   }
 
   eventObj.unsubscribe = function(name) {
