@@ -72,9 +72,9 @@ define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
     stats = fs.statSync(unescape(actualPath));
 
     if(stats.isDirectory()) {
-      setTimeout(function() { new IMVC.Views.DirectoryView(actualPath, context).render({pathTo: pathTo}) }, 1);
+      process.nextTick(function() { new IMVC.Views.DirectoryView(actualPath, context).render({pathTo: pathTo}) });
     } else if(stats.isFile()) {
-      setTimeout(function() { new IMVC.Views.FileView(actualPath, context).render() }, 1);
+      process.nextTick(function() { new IMVC.Views.FileView(actualPath, context).render() });
     } else {
       //well then wtf is it?
 

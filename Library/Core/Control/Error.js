@@ -4,8 +4,8 @@ require("../Routing/Router");
 
 
 define("IMVC.Controllers.Error").extend("IMVC.Controllers.Controller").assign({
-  Error: function(request, response) {
-    this.Controller(request, response);
+  Error: function(context) {
+    this.Controller(context);
   },
 
   404: function(requestArgs) {

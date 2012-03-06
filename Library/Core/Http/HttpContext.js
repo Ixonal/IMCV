@@ -8,6 +8,7 @@ define("IMVC.Http.HttpContext").assign({
   session: null,
   userId: null,
   
+  
   HttpContext: function(request, response) {
     this.request = request;
     this.response = response;
@@ -22,15 +23,11 @@ define("IMVC.Http.HttpContext").assign({
           host = headers["host"],
           userAgent = headers["user-agent"],
           appName = config.app.name,
-          hostIP,
+          clientIP = headers['x-forwarded-for'] || this.request.getConnection().remoteAddress,
           CIDValue;
       
-      hostIP = headers['x-forwarded-for'];
-      if(typeof(hostIP) == "undefined") {
-        hostIP = this.request.getConnection().remoteAddress;
-      }
       
-      CIDValue = host + "_" + appName + "_" + hostIP + "_" + userAgent;
+      CIDValue = host + "_" + appName + "_" + clientIP + "_" + userAgent;
       
       hasher.update(CIDValue);
       

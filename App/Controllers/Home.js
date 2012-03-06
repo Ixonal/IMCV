@@ -1,8 +1,8 @@
 var http = require("http");
 
 define("Home").extend("IMVC.Controllers.Controller").assign({
-  Home: function(request, response) {
-    this.Controller(request, response);
+  Home: function(context) {
+    this.Controller(context);
   },
 
   Index: function(requestArgs) {
@@ -24,6 +24,7 @@ define("Home").extend("IMVC.Controllers.Controller").assign({
 
   otherAction: function(requestArgs) {
 
+    this.viewLocals.blah = this.context.request.post("something");
     this.viewLocals.something = "this is something";
     this.viewLocals.pie = "this is pie";
     this.render();

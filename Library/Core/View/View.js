@@ -1,6 +1,7 @@
 
 var fs = require("fs"),
-    ejs = require("./ejs");
+    ejs = require("./ejs"),
+    utility = require("../Utility");
 
 define("IMVC.Views.View", "abstract").assign({
   viewFile: null,
@@ -17,6 +18,8 @@ define("IMVC.Views.View", "abstract").assign({
   viewReady: null,
 
   outputString: null,
+  
+  mimeType: null,
 
   View: function(viewFile, context) {
     
@@ -35,6 +38,8 @@ define("IMVC.Views.View", "abstract").assign({
     this.viewFinish = event(this);
 
     this.viewFile = unescape(this.viewFile);
+    
+    this.mimeType = utility.determineMimeTypeFromExtension(this.viewFile);
   },
 
   render: abstractFunction(Object),

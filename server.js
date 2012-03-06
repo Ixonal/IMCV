@@ -11,35 +11,46 @@ global.ServerEvents.routesLoaded = event();
 global.ServerEvents.connectedToDatabase = event();
 global.ServerEvents.serverCreated = event();
 global.ServerEvents.connectionReceived = event();
+global.ServerEvents.requestBodyComplete = event();
 global.ServerEvents.caughtError = event();
 global.ServerEvents.serverExit = event();
 global.ServerEvents.appReady = event();
 
-ServerEvents.coreLibraryLoaded.subscribe("coreLoaded", function() {
+//polling events
+global.ServerEvents.minuteCheck = event();
+global.ServerEvents.hourCheck = event();
+global.ServerEvents.dayCheck = event();
+
+setInterval(function() { ServerEvents.minuteCheck(); }, 1000 * 60);
+setInterval(function() { ServerEvents.hourCheck(); }, 1000 * 60 * 60);
+setInterval(function() { ServerEvents.dayCheck(); }, 1000 * 60 * 60 * 24);
+
+
+ServerEvents.coreLibraryLoaded.subscribe("__coreLoaded", function() {
   IMVC.Logger.log("Core library loaded.");
 });
 
-ServerEvents.appLoaded.subscribe("appLoaded", function() {
+ServerEvents.appLoaded.subscribe("__appLoaded", function() {
   IMVC.Logger.log("App code loaded.");
 });
 
-ServerEvents.routesLoaded.subscribe("routesLoaded", function() {
+ServerEvents.routesLoaded.subscribe("__routesLoaded", function() {
   IMVC.Logger.log("Routes loaded.");
 });
 
-ServerEvents.connectedToDatabase.subscribe("databaseConnected", function() {
+ServerEvents.connectedToDatabase.subscribe("__databaseConnected", function() {
   IMVC.Logger.log("Connected to the database.");
 });
 
-ServerEvents.caughtError.subscribe("caughtError", function(err) {
+ServerEvents.caughtError.subscribe("__caughtError", function(err) {
   IMVC.Logger.error(err.stack);
 });
 
-ServerEvents.serverExit.subscribe("serverExit", function() {
+ServerEvents.serverExit.subscribe("__serverExit", function() {
   IMVC.Logger.log("Server shutting down.");
 });
 
-ServerEvents.appReady.subscribe("appReady", function() {
+ServerEvents.appReady.subscribe("__appReady", function() {
   IMVC.Logger.log("Server created!");
   IMVC.Logger.log("Awaiting connections on " + config.http.host + ":" + config.http.port);
 });
@@ -88,13 +99,13 @@ ServerEvents.routesLoaded();
 
 //connect to the database
 try {
-if(config.db.connectionString) {
-  IMVC.Models.Model.connectToDatabase(config.connectionString);
-  ServerEvents.connectedToDatabase();
-} else if(config.db.host && config.db.port && config.db.database) {
-  IMVC.Models.Model.connectToDatabase(config.db.host, config.db.database, config.db.port, {});
-  ServerEvents.connectedToDatabase();
-}
+  if(config.db.connectionString) {
+    IMVC.Models.Model.connectToDatabase(config.connectionString);
+    ServerEvents.connectedToDatabase();
+  } else if(config.db.host && config.db.port && config.db.database) {
+    IMVC.Models.Model.connectToDatabase(config.db.host, config.db.database, config.db.port, {});
+    ServerEvents.connectedToDatabase();
+  }
 } catch(e) {
   IMVC.Logger.error("Unable to connect to the database: " + e);
 }
@@ -107,12 +118,18 @@ global.Server = http.createServer(function(request, response) {
   
   ServerEvents.connectionReceived(request, response);
   
-  process.nextTick(function() {
-    try {
-      (new IMVC.Routing.Router()).route(new IMVC.Http.HttpContext(request, response));
-    } catch(e) {
-      Server.criticalError(response, e.toString());
-    }
+
+  request.bodyLoaded.subscribe("__requestReady", function() {
+    ServerEvents.requestBodyComplete(request);
+    
+    
+    process.nextTick(function() {
+      try {
+        (new IMVC.Routing.Router()).route(new IMVC.Http.HttpContext(request, response));
+      } catch(e) {
+        Server.criticalError(response, e.toString());
+      }
+    });
   });
 });
 

@@ -75,7 +75,7 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
 
       controller.init();
 
-      setTimeout(function() { action.apply(controller, args); }, 1);
+      process.nextTick(function() { action.apply(controller, args); });
       
     } catch(e) {
       IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {args: args[0], error: e});

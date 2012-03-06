@@ -6,4 +6,12 @@
 </h1>
 <div class="ContentDiv">
   <%=message%>
+  <br/><br/>
+  <form action="/blah" method="post" enctype="text/plain">
+    <input type="text" name="something" /><br/>
+    <input type="checkbox" name="isChecked" value="blah" /> blah<br/>
+    <input type="checkbox" name="isChecked" value="more blah" /> more blah<br/>
+    <input type="file" name="someFile" /> try a file type<br/>
+    <input type="submit" name="submit" value="Submit" />
+  </form>
 </div>

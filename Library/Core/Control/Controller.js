@@ -85,7 +85,7 @@ define("IMVC.Controllers.Controller").assign({
     this.preRender();
 
     view = new IMVC.Views.ControllerView(viewFile, this.context);
-    setTimeout(function() {
+    process.nextTick(function() {
       try {
         view.render(_this.viewLocals);
         _this.finalize();
@@ -101,7 +101,7 @@ define("IMVC.Controllers.Controller").assign({
             break;
         }
       }
-    }, 1);
+    });
     //console.log("a controller is trying to render.");
   }
 });

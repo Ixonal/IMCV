@@ -152,6 +152,7 @@ define("IMVC.Routing.Router").assign({
         newRoute = new IMVC.Routing.StaticRoute(method, path, operation);
       } else if(operation.toLowerCase().indexOf("ignore") != -1) {
         newRoute = new IMVC.Routing.IgnoreRoute(method, path, operation);
+        IMVC.Routing.Router.ignoreRoutes.push(newRoute);
       } else {
         Logger.error("Unknown action string: " + operation);
       }
@@ -287,7 +288,9 @@ define("IMVC.Routing.Router").assign({
 
     return queryString.substring(0, queryString.length - 1);
   },
+  
 
-  routes: []
+  routes: [],
+  ignoreRoutes: []
 });
 

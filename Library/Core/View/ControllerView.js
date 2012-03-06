@@ -66,6 +66,10 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
         _this.loadFile(file, function(fileData) {
 
           _this.includes[file] = (ejs.compile(fileData))(viewData);
+          //special case concerning newlines in json
+          if(_this.mimeType === "text/json") {
+            _this.includes[file] = _this.includes[file].replace(/\n\r/gm, "").replace(/\s+/g, " ");
+          }
           _this.fileLoaded(file);
         });
       }
@@ -203,6 +207,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
   display: function(outputString) {
     if(this.viewComplete) return;
 
+    this.context.response.setHeader("Content-Type", this.mimeType);
     this.context.response.end(outputString);
     this.viewComplete = true;
     this.viewFinish();
