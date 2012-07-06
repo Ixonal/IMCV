@@ -7,8 +7,8 @@ var fs = require("fs"),
 define("IMVC.Views.DirectoryView").extend("IMVC.Views.ControllerView").assign({
   folder: null,
 
-  DirectoryView: function(viewFile, context) {
-    this.ControllerView(IMVC.Views.DirectoryView.DIRECTORY_VIEW_FILE, context);
+  DirectoryView: function(viewFile, context, statusCode) {
+    this.ControllerView(IMVC.Views.DirectoryView.DIRECTORY_VIEW_FILE, context, statusCode);
 
     this.folder = viewFile;
   },
@@ -29,7 +29,7 @@ define("IMVC.Views.DirectoryView").extend("IMVC.Views.ControllerView").assign({
 
       } else {
         IMVC.Logger.error(err.toString());
-        IMVC.Routing.Router.swapTo("IMVC.Controller.Error", "500", _this.request, _this.response, {error: "View file is not a file."});
+        IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.request, _this.response, {error: "View file is not a file."});
       }
 
     });
@@ -38,6 +38,7 @@ define("IMVC.Views.DirectoryView").extend("IMVC.Views.ControllerView").assign({
   finalizeOutput: function() {},
 
   display: function(outputString) {
+    this.context.response.writeHead(this.statusCode);
     this.context.response.end(outputString);
     this.viewComplete = true;
   }

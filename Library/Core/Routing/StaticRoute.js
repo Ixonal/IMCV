@@ -4,8 +4,8 @@ require("./Route.js");
 var fs = require("fs");
 
 define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
-  StaticRoute: function(method, path, operation) {
-    this.Route(method, path, operation);
+  StaticRoute: function(method, path, operation, secureStatus) {
+    this.Route(method, path, operation, secureStatus);
 
     if(operation.lastIndexOf(":") == -1 || operation.lastIndexOf("/") == -1) {
       throw new Error("Static routes must map to a directory.");
@@ -13,7 +13,7 @@ define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
 
     var operationParts = operation.split(":");
 
-    this.operation.directory = operationParts[1];
+    this._operation.directory = operationParts[1];
     
   },
 
@@ -26,16 +26,16 @@ define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
 
     otherPathParts.splice(0, 1);
 
-    if(otherPathParts.length < this.pathParts.length) return null;
+    if(otherPathParts.length < this._pathParts.length) return null;
 
-    for(index in this.pathParts) {
+    for(index in this._pathParts) {
       currentPartMatches = false;
 
-      if(this.pathParts[index].match(variableReg)) {
+      if(this._pathParts[index].match(variableReg)) {
         currentPartMatches = true;
-        outputVals[this.pathParts[index].replace(variableReg, "$1")] = otherPathParts[index];
+        outputVals[this._pathParts[index].replace(variableReg, "$1")] = otherPathParts[index];
       } else {
-        if(this.pathParts[index] == otherPathParts[index]) {
+        if(this._pathParts[index] == otherPathParts[index]) {
           currentPartMatches = true;
         }
       }
@@ -52,8 +52,8 @@ define("IMVC.Routing.StaticRoute").extend("IMVC.Routing.Route").assign({
   },
 
   activate: function(context, routeInfo) {
-    var pathTo = this.path,
-        actualPath = constants.AppRoot + this.operation.directory,
+    var pathTo = this._path,
+        actualPath = constants.AppRoot + this._operation.directory,
         otherPathParts = routeInfo.routeVars.additionalParts,
         index,
         stats;

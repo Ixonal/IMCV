@@ -1,0 +1,9 @@
+{
+  "success": <%= success %>
+  <% if(!success) { %>
+  , "error": "<%= error.toString() %>"
+  <% } %>
+  <% if(username) { %>
+  , "username: "<%= username %>"
+  <% } %>
+}

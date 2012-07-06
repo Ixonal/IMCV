@@ -1,0 +1,18 @@
+<% title = "Please Log In"; %>
+<%= inherits("/layout.html") %>
+
+<% if(error) { %>
+<div id="errors" style="border: 1px solid #FF0000; color: #FF0000;">
+  <%= error %>
+</div>
+<% } %>
+
+<div id="loginDiv">
+
+  <form name="loginForm" method="post" type="plain/text" action="<%= ReverseRoute(IMVC.Controllers.SecureController, 'authenticate') %>">
+    username: <input type="text" name="username" id="username" value="<%= username %>" /><br/>
+    password: <input type="password" name="password" id="password" /><br/>
+    <input type="submit" name="submit" id="submit" value="Submit" />
+    <input type="reset" name="reset" id="reset" value="Reset" />
+  </form>
+</div>

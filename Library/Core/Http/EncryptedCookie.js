@@ -2,17 +2,16 @@
 var crypto = require("crypto");
 
 define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
-  _encrypted: null,
+  _encrypted: false,
   
   EncryptedCookie: function(key, value, expires) {
     this.Cookie(key, value, expires);
-    
-    this._encrypted = false;
   },
   
   _decypher: function() {
     if(!this._encrypted) {
-      throw new Error("The cookie is not yet encrypted.");
+      //throw new Error("The cookie is not yet encrypted.");
+      return;
     }
     
     //just to make sure these things are in there
@@ -31,17 +30,18 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
       decypheredValue += decypher.final("ascii");
       
     } catch(e) {
-      IMVC.Logger.warn("A cookie was unable to be decrypted: " + this.getKey() + ", " + e.toString());
+      IMVC.Logger.warn("A cookie was unable to be decrypted: " + this.getKey() + ", " + e.stack);
       decypheredValue = this.getValue();
     }
     
-    this._encrypted = true;
+    this._encrypted = false;
     this.setValue(decypheredValue);
   },
   
   _cypher: function() {
     if(this._encrypted) {
-      throw new Error("The cookie is already encrypted.");
+      //throw new Error("The cookie is already encrypted.");
+      return;
     } 
     
   //just to make sure these things are in there
@@ -51,7 +51,7 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
     if(!config.http.cookies.encryption.algorithm) config.http.cookies.encryption.algorithm = "AES256";
     if(!config.http.cookies.encryption.key) config.http.cookies.encryption.key = "SOME_KEY";
     
-    var cypher = crypto.createCipher(config.http.cookies.encryption.algorithm || "AES256", config.http.cookies.encryption.key || "SOME_KEY"),
+    var cypher = crypto.createCipher(config.http.cookies.encryption.algorithm, config.http.cookies.encryption.key),
         newVal = "";
     
     try {
@@ -62,7 +62,7 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
       newVal = this.getValue();
     }
     
-    this._encrypted = false;
+    this._encrypted = true;
     this.setValue(newVal);
   },
   

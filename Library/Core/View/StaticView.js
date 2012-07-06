@@ -9,8 +9,8 @@ define("IMVC.Views.StaticView").extend("IMVC.Views.View").assign({
   pathTo: null,
   filename: null,
 
-  StaticView: function(viewFile, context) {
-    this.View(viewFile, context);
+  StaticView: function(viewFile, context, statusCode) {
+    this.View(viewFile, context, statusCode);
 
     if(viewFile.charAt(viewFile.length - 1) == "/") {
       viewFile = viewFile.substr(0, viewFile.length - 1);

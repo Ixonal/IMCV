@@ -21,23 +21,22 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
 
   outputString: null,
 
-  ControllerView: function(viewFile, context) {
-    this.View(viewFile, context);
+  ControllerView: function(viewFile, context, statusCode) {
+    this.View(viewFile, context, statusCode);
     
-    this.fileLoaded.subscribe("onFileLoaded", this.onFileLoaded);
+    this.fileLoaded.subscribe(this.onFileLoaded);
 
-    this.fileIncluded.subscribe("onFileIncluded", this.onFileIncluded);
+    this.fileIncluded.subscribe(this.onFileIncluded);
 
-    this.viewReady.subscribe("onViewReady", this.onViewReady);
+    this.viewReady.subscribe(this.onViewReady);
 
-    this.viewFinish.subscribe("__destruction", function() {
-    //when finished, send the view to be destroyed
-    var _this = this;
+    this.viewFinish.subscribe(function() {
+      //when finished, send the view to be destroyed
+      var _this = this;
       
       setTimeout(function() { destroy(_this); }, 1);
     });
 
-    //this.viewFile = unescape(this.viewFile);
   },
 
   _View: function() {
@@ -53,7 +52,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
 
 
     viewData.Helpers = IMVC.Views.Helpers;
-    viewData.ReverseRoute = IMVC.Routing.Router.reverseRoute;
+    viewData.ReverseRoute = viewData._ = IMVC.Routing.Router.reverseRoute;
 
     //includes the contents of a file into the current view
     viewData.include = function(file) {
@@ -83,7 +82,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
     viewData.inherits = function(file) {
       var viewDataCopy;
       if(!_this.parentView) {
-        viewDataCopy = COM.SCM.SubClassTree.extend({}, viewData);
+        viewDataCopy = COM.extend({}, viewData);
         file = IMVC.Views.View.viewRoot + file;
         _this.parentView = new IMVC.Views.ParentView(file, _this.context, _this);
         _this.parentView.render(viewDataCopy);
@@ -101,7 +100,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
         _this.outputString = ejsFunc(viewData);
         _this.fileLoaded(_this.viewFile);
       } catch(e) {
-        IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.request, _this.response, {error: e});
+        IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.context, {error: e});
       }
     });
   },
@@ -117,14 +116,13 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
               callback(data.toString());
             } else {
               //couldn't read the file for some reason
-              IMVC.Logger.error("Failed to read a file: " + _this.viewFile);
-              IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.request, _this.response, {error: err});
+              IMVC.Logger.error("Failed to read a file: " + _this.viewFile + " - " + err);
+              IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.context, {error: err});
             }
           });
         } else {
-          //can't view it if it's not a file, do something error-like
           IMVC.Logger.error("Tried to view something that isn't a file: " + _this.viewFile);
-          IMVC.Routing.Router.swapTo("IMVC.Controller.Error", "500", _this.request, _this.response, {error: "View file is not a file."});
+          IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.context, {error: new Error("View file is not a file.")});
         }
       } else {
         //the file isn't there, do something error-like
@@ -174,16 +172,6 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
     return context;
   },
 
-  getLowestChildView: function() {
-    var context = this;
-
-    while(context.childView) {
-      context = context.childView;
-    }
-
-    return context;
-  },
-
   ready: function() {
     return Object.keys(this.loadingFiles).length == 0;
   },
@@ -208,6 +196,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
     if(this.viewComplete) return;
 
     this.context.response.setHeader("Content-Type", this.mimeType);
+    this.context.response.writeHead(this.statusCode);
     this.context.response.end(outputString);
     this.viewComplete = true;
     this.viewFinish();

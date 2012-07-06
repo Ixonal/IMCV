@@ -5,15 +5,15 @@ require("./Router");
 define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign({
   actionArgs: null,
 
-  ControllerActionRoute: function(method, path, operation) {
-    this.Route(method, path, operation);
+  ControllerActionRoute: function(method, path, operation, secureStatus) {
+    this.Route(method, path, operation, secureStatus);
 
     if(operation.lastIndexOf(".") == -1) {
       throw new Error("ControllerActionRoute requires both a controller and an action.");
     }
 
-    this.operation.controller = operation.substring(0, operation.lastIndexOf("."));
-    this.operation.action = operation.substring(operation.lastIndexOf(".") + 1, operation.length);
+    this._operation.controller = operation.substring(0, operation.lastIndexOf("."));
+    this._operation.action = operation.substring(operation.lastIndexOf(".") + 1, operation.length);
   },
 
   //resolves a variable controller
@@ -51,34 +51,55 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
         controller,
         actionName,
         action,
-        args = [];
+        index;
 
-
-    args.push(COM.SCM.SubClassTree.extend(routeInfo.query, routeInfo.routeVars));
+    //populating the request's route hash
+    if(routeInfo.routeVars) {
+      for(index in routeInfo.routeVars) {
+        context.request.routeVals[index] = routeInfo.routeVars[index];
+      }
+    }
 
     try {
-      controllerClass = COM.ClassObject.obtainNamespace(this.resolveController(this.operation.controller, routeInfo.routeVars));
-      actionName = this.resolveAction(this.operation.action, routeInfo.routeVars);
+      
+      //get the actual class of the controller
+      controllerClass = COM.obtainNamespace(this.resolveController(this._operation.controller, routeInfo.routeVars));
+      
+      //determine which action to run
+      actionName = this.resolveAction(this._operation.action, routeInfo.routeVars);
 
+      //the controller class is a namespace... guess it didn't exist
       if(controllerClass.__Namespace__) {
         //the controller wasn't there, so it made it a namespace
-        throw new Error("Controller " + this.operation.controller + " does not exist.");
+        throw new Error("Controller " + this._operation.controller + " does not exist.");
       }
 
+      //create a new instance of the given controller
       controller = new controllerClass(context);
       controller.actionName = actionName;
       action = controller[actionName];
-
+      
+      //that action doesn't exist
       if(typeof(action) == "undefined") {
-        throw new Error("Action " + this.operation.full + " does not exist.");
+        destroy(controller);
+        throw new Error("Action " + this._operation.full + " does not exist.");
       }
 
+      //fire the controller's init event
       controller.init();
 
-      process.nextTick(function() { action.apply(controller, args); });
+      //detach the controller from the router
+      process.nextTick(function() {
+        try {
+          action.call(controller);
+        } catch(e) {
+          IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {error: e});
+        }
+         
+      });
       
     } catch(e) {
-      IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {args: args[0], error: e});
+      IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {error: e});
     }
 
   }

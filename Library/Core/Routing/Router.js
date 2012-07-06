@@ -14,18 +14,37 @@ define("IMVC.Routing.Router").assign({
   },
 
   route: function(context) {
-    var selectedIndex;
+    if(!Object.is(context, IMVC.Http.HttpContext)) throw new Error("Routing requires a proper HttpContext.");
+    
+    var selectedIndex,
+        route,
+        secureStatus;
 
     selectedIndex = this.resolve(context.request);
-
+    
     if(selectedIndex === null) {
       //throw an error here, 404
-      IMVC.Logger.log("404 error");
-      response.redirect("IMVC.Controllers.Error", "404");
+      context.response.redirect("IMVC.Controllers.Error", "404");
+    } else {
+      route = this.routes[selectedIndex.index];
+      secureStatus = route.getSecureStatus();
+
+      if(context.request.isSecure()) {
+        if(secureStatus === IMVC.Routing.RouteSecureStatus.SECURE_CODE || secureStatus === IMVC.Routing.RouteSecureStatus.INDIFFERENT_CODE) {
+          route.activate(context, selectedIndex);
+        } else {
+          context.response.redirect(IMVC.Controllers.Error, "403");
+        }
+      } else {
+        if(secureStatus === IMVC.Routing.RouteSecureStatus.INSECURE_CODE || secureStatus === IMVC.Routing.RouteSecureStatus.INDIFFERENT_CODE) {
+          route.activate(context, selectedIndex);
+        } else {
+          context.response.redirect(IMVC.Controllers.Error, "403");
+        }
+      }
+      
     }
-
-    this.routes[selectedIndex.index].activate(context, selectedIndex);
-
+    
     destroy(this);
   },
 
@@ -48,6 +67,7 @@ define("IMVC.Routing.Router").assign({
 }).statics({
   ROUTE_FILE: config.http.routes,
   variableReg: /[\{]([^}]+)[\}]/,
+  dotReplaceReg: /\./g,
 
 
   
@@ -68,19 +88,25 @@ define("IMVC.Routing.Router").assign({
     [IMVC.Controllers.Controller, String, IMVC.Http.HttpContext, Object],
     function(controllerClass, actionString, context, requestVals) {
       var controller,
-          action;
+          action,
+          index;
 
+      for(index in requestVals) {
+        context.request.routeVals[index] = requestVals[index];
+      }
+      
       try {
         controller = new controllerClass(context);
         action = controller[actionString];
 
         controller.actionName = actionString;
         controller.init();
-        action.apply(controller, [requestVals]);
+        action.call(controller);
 
       } catch(e) {
+        //IMVC.Logger.error(e.stack);
         if(controllerClass == IMVC.Controllers.ErrorController && actionString == "500") {
-          Server.criticalError(context.response, "Internal Server Error unreachable, " + e.toString());
+          Server.criticalError(context.response, "Internal Server Error unreachable, " + e.toString(), e);
         } else {
           IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", context, {requestVals: requestVals, error: e});
         }
@@ -91,7 +117,7 @@ define("IMVC.Routing.Router").assign({
     [String, String, IMVC.Http.HttpContext, Object],
     function(controllerString, actionString, context, requestVals) {
 
-      var controller = COM.ClassObject.obtainNamespace(controllerString);
+      var controller = COM.obtainNamespace(controllerString);
       IMVC.Routing.Router.swapTo(controller, actionString, context, requestVals);
     }
   ),
@@ -130,14 +156,15 @@ define("IMVC.Routing.Router").assign({
         method,
         path,
         operation,
+        secureStatus,
         newRoute;
 
     for(index in routes) {
-      routeParts = routes[index].split(/\s/);
+      routeParts = routes[index].split(/\s+/);
       
       //ignore improperly formatted lines
-      if(routeParts.length != 3) {
-        Logger.error("Invalid route found: " + routes[index]);
+      if(routeParts.length < 3 || routeParts.length > 4) {
+        IMVC.Logger.error("Invalid route found: " + routes[index]);
         continue;
       }
 
@@ -145,13 +172,14 @@ define("IMVC.Routing.Router").assign({
       method = routeParts[0];
       path = routeParts[1];
       operation = routeParts[2];
+      secureStatus = routeParts[3] || "";
 
       if(operation.toLowerCase().indexOf(".") != -1) {
-        newRoute = new IMVC.Routing.ControllerActionRoute(method, path, operation);
+        newRoute = new IMVC.Routing.ControllerActionRoute(method, path, operation, secureStatus);
       } else if(operation.toLowerCase().indexOf("static") != -1) {
-        newRoute = new IMVC.Routing.StaticRoute(method, path, operation);
+        newRoute = new IMVC.Routing.StaticRoute(method, path, operation, secureStatus);
       } else if(operation.toLowerCase().indexOf("ignore") != -1) {
-        newRoute = new IMVC.Routing.IgnoreRoute(method, path, operation);
+        newRoute = new IMVC.Routing.IgnoreRoute(method, path, operation, secureStatus);
         IMVC.Routing.Router.ignoreRoutes.push(newRoute);
       } else {
         Logger.error("Unknown action string: " + operation);
@@ -171,22 +199,12 @@ define("IMVC.Routing.Router").assign({
     function(controller, actionString) {
       return IMVC.Routing.Router.reverseRoute(controller, actionString, {});
     },
-
+    
     [IMVC.Controllers.Controller, String, Object],
     function(controller, actionString, otherInfo) {
-      var controllerNamespace = controller.getClassNamespace(),
-          controllerName = controller.getClassName(),
-          controllerString;
-
       if(typeof(otherInfo) != "object") otherInfo = {};
 
-      if(controllerNamespace && controllerNamespace.length > 0) {
-        controllerString = controllerNamespace + "." + controllerName;
-      } else {
-        controllerString = controllerName;
-      }
-
-      return IMVC.Routing.Router.reverseRoute(controllerString, actionString, otherInfo);
+      return IMVC.Routing.Router.reverseRoute(controller.getClassPath(), actionString, otherInfo);
     },
     
     [String, String, Object],
@@ -206,19 +224,23 @@ define("IMVC.Routing.Router").assign({
           controllerVars,
           actionVars,
           screenedVars = [];
-
+      
       if(typeof(otherInfo) != "object") otherInfo = {};
+      
+//      console.log(routes);
 
       //check for static routes
       for(index in routes) {
-        if(routes[index].getClassName() != "ControllerActionRoute") continue;
+        //if(routes[index].getClassName() != "ControllerActionRoute") continue;
+        
+        if(!routes[index].is(IMVC.Routing.ControllerActionRoute)) continue;
 
         controllerVars = [];
         actionVars = [];
 
-        currentController = "^" + routes[index].operation.controller + "$";
-        currentAction = "^" + routes[index].operation.action + "$";
-
+        currentController = "^" + routes[index]._operation.controller + "$";
+        currentAction = "^" + routes[index]._operation.action + "$";
+        
         while(variableReg.test(currentController)) {
           controllerVars.push(variableReg.exec(currentController)[1]);
           currentController = currentController.replace(variableReg, textCaptureReg);
@@ -228,13 +250,16 @@ define("IMVC.Routing.Router").assign({
           actionVars.push(variableReg.exec(currentAction)[1]);
           currentAction = currentAction.replace(variableReg, textCaptureReg);
         }
+        
+        currentController = currentController.replace(IMVC.Routing.Router.dotReplaceReg, "\\.");
+        currentAction = currentAction.replace(IMVC.Routing.Router.dotReplaceReg, "\\.");
 
         controllerReg = new RegExp(currentController, "g");
         actionReg = new RegExp(currentAction, "g");
 
         controllerResult = controllerReg.exec(controllerString);
         actionResult = actionReg.exec(actionString);
-
+        
         if(controllerResult != null && actionResult != null) {
 
           for(index2 = 1; index2 < controllerResult.length; index2++) {
@@ -246,7 +271,7 @@ define("IMVC.Routing.Router").assign({
             otherInfo[actionVars[index2 - 1]] = actionResult[index2];
           }
           matchingRoute = routes[index];
-          matchingRoutePath = matchingRoute.path;
+          matchingRoutePath = matchingRoute._path;
           break;
         }
 
@@ -255,21 +280,23 @@ define("IMVC.Routing.Router").assign({
       if(matchingRoute == null) {
         throw new Error("The router was unable to find a route for that controller and action.");
       }
-
+      
       //adjust the route to the given information
       while(variableReg.test(matchingRoutePath)) {
         index = variableReg.exec(matchingRoutePath);
         index = index[1];
+        if(!otherInfo[index]) {
+          throw new Error("The router was unable to find a route for that controller, action, and other variable sequence.");
+        }
         matchingRoutePath = matchingRoutePath.replace(variableReg, otherInfo[index]);
         screenedVars.push(index);
       }
 
       for(index in screenedVars) {
-        delete otherInfo[index];
+        delete otherInfo[screenedVars[index]];
       }
-
+      
       matchingRoutePath = matchingRoutePath + IMVC.Routing.Router.constructQueryString(otherInfo);
-
 
       return matchingRoutePath;
     }

@@ -1,6 +1,7 @@
 
 var fs = require("fs"),
     util = require("util"),
+    crypto = require("crypto"),
 
     JS_EXTENSION = "js",
     NODE_EXTENSION = "node";
@@ -93,29 +94,27 @@ exports.loadConfig = function() {
   //get lines
   inputLines = inputString.split("\n");
 
-  //cut out any empty lines
-  for(index in inputLines) {
-    if(inputLines[index] === "") {
+  //cut out any empty or comment lines... have to go backwards on this
+  for(index = inputLines.length - 1; index >= 0; index--) {
+    if(inputLines[index] === "" || inputLines[index][0] === "#") {
       inputLines.splice(index, 1);
     }
   }
 
   //checking every line
   for(index in inputLines) {
-    //ignore comments
-    if(inputLines[index][0] !== '#') {
-      currentLine = inputLines[index].split("=");
 
-      //should only be a left hand side and a right hand side
-      if(currentLine.length != 2) continue;
+    currentLine = inputLines[index].split("=");
 
-      resolveConfigProperty(currentLine[0], currentLine[1]);
-    }
+    //should only be a left hand side and a right hand side
+    if(currentLine.length != 2) return;
+    
+    resolveConfigProperty(currentLine[0], currentLine[1]);
   }
 }
 
 function resolveConfigProperty(propertyString, propertyValue) {
-  var base = COM.ClassObject.obtainNamespace("global.config"),
+  var base = COM.obtainNamespace("global.config"),
       trail = propertyString.replace(/[ \t]+/gim, "").split("."),
       index;
 
@@ -130,6 +129,25 @@ function resolveConfigProperty(propertyString, propertyValue) {
     base[trail[index]] = propertyValue.replace(/[ \t]+/, "");
   }
 }
+
+exports.runSecureServer = function() {
+  return new Boolean(config.http.ssl.privateKeyFile && config.http.ssl.certificateFile);
+}
+
+exports.getPrivateKey = function() {
+  return fs.readFileSync(constants.AppRoot + config.http.ssl.privateKeyFile);
+}
+
+exports.getCertificate = function() {
+  return fs.readFileSync(constants.AppRoot + config.http.ssl.certificateFile);
+}
+
+//exports.getCredentials = function(privateKeyFile, certificateFile) {
+//  var privateKey = fs.readFileSync(privateKeyFile),
+//      certificate = fs.readFileSync(certificateFile);
+//  
+//  return crypto.createCredentials({key: privateKey, cert: certificate});
+//}
 
 exports.determineMimeTypeFromExtension = function(file) {
   if(typeof(file) !== "string") {

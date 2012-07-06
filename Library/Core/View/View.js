@@ -20,8 +20,11 @@ define("IMVC.Views.View", "abstract").assign({
   outputString: null,
   
   mimeType: null,
+  statusCode: null,
 
-  View: function(viewFile, context) {
+  View: function(viewFile, context, statusCode) {
+    if(!viewFile.is(String)) throw new Error("viewFile must be a valid String.");
+    if(!context.is(IMVC.Http.HttpContext)) throw new Error("context must be a valid IMVC.Http.HttpContext.");
     
     this.viewFile = viewFile;
     this.context = context;
@@ -40,6 +43,7 @@ define("IMVC.Views.View", "abstract").assign({
     this.viewFile = unescape(this.viewFile);
     
     this.mimeType = utility.determineMimeTypeFromExtension(this.viewFile);
+    this.statusCode = statusCode || 200;
   },
 
   render: abstractFunction(Object),

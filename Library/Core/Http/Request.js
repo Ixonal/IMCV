@@ -1,30 +1,45 @@
+require("../Utility/Securable");
 
 var querystring = require("querystring"),
     formidable = require("./formidable"),
-    fs = require("fs");
+    fs = require("fs"),
+    url = require("url");
 
 
-define("IMVC.Http.Request").assign({
+define("IMVC.Http.Request").extend("IMVC.Utility.Securable").assign({
   nodeRequest: null,
+  _context: null,
+  errorEncountered: false,
   
   postVals: null,
   fileVals: null,
-  getVals: null,
+  queryVals: null,
+  routeVals: null,
   
   postAdded: null,
   bodyLoaded: null,
+  error: null,
 
-  Request: function(nodeRequest, completeCallback) {
+  Request: function(nodeRequest, isSecure) {
+    this.Securable(isSecure);
     this.nodeRequest = nodeRequest;
     
     this.postAdded = event(this);
     this.bodyLoaded = event(this);
+    this.error = event(this);
     
     this.postVals = {};
     this.fileVals = {};
-    this.getVals = {};
+    this.queryVals = {};
+    this.routeVals = {};
     
-    var _this = this;
+    var _this = this,
+        urlObj = url.parse(this.getUrl(), true),
+        index;
+    
+    for(index in urlObj.query) {
+      this.queryVals[index] = urlObj.query[index];
+    }
     
     if(this.getMethod().toUpperCase() === "POST") {
       
@@ -46,7 +61,12 @@ define("IMVC.Http.Request").assign({
   
         var form = formidable.IncomingForm();
         
-        form.uploadDir = constants.AppRoot + config.http.uploads.directory;
+        form.uploadDir = IMVC.Utility.TempFileHandler.tempRoot;
+        
+
+        form.on("progress", function(received, expected) {
+          
+        });
         
         form.on("field", function(field, value) {
           if(_this.postVals[field]) {
@@ -59,16 +79,26 @@ define("IMVC.Http.Request").assign({
           _this.postAdded();        
         });
         
+        
         form.on("file", function(field, file) {
+          if(file.size >= +config.http.uploads.uploadLimit) {
+            fs.unlink(file.path);
+            _this.errorEncountered = true;
+            if(!_this.errorEncountered) {
+              _this.error(new Error("Upload limit exceeded."));
+            }
+          } else {
+            _this.postVals[field] = file;
+            _this.fileVals[field] = file;
           
-          _this.postVals[field] = file;
-          _this.fileVals[field] = file;
-          
-          _this.postAdded();
+            _this.postAdded();
+          }
         });
         
         form.on("end", function() {
-          _this.bodyLoaded();
+          if(!_this.errorEncountered) {
+            _this.bodyLoaded();
+          }
         });
         
         form.parse(this.nodeRequest);
@@ -77,19 +107,13 @@ define("IMVC.Http.Request").assign({
       
     } else {
       setTimeout(function() {
-        _this.bodyLoaded();
+        if(!_this.errorEncountered) {
+          _this.bodyLoaded();
+        }
       }, 1);
     }
   },
   
-  post: function(key) {
-    return this.postVals[key];
-  },
-  
-  get: function(key) {
-    return this.getVals[key];
-  },
-
   getMethod: function() {
     return this.nodeRequest.method;
   },
@@ -130,78 +154,84 @@ define("IMVC.Http.Request").assign({
     return this.nodeRequest.setEncoding(to);
   },
   
-  
-//  getBody: function() {
-//    return this[" body "];
-//  },
-  
-  _parseMultipart: function(body, boundary) {
-    //todo: find a quicker way to parse the request body
-    //around 230 mbps right now, I know we can do better 
-    var bodyParts = body.split(new RegExp(boundary, "gim")),
-        multiReg = /\s*Content-Disposition: form-data;\s*name="([^"]*)"(;\s*filename="([^"]*)")?\s*(Content-Type:\s*(\S*))?\s*([\w\W]*)--/gim,
-        NAME_FIELD = 1,
-        FILENAME_FIELD = 3,
-        CONTENT_TYPE = 5,
-        VALUE_FIELD = 6,
-        tempFolder = (this.getHeaders()['x-forwarded-for'] || this.getConnection().remoteAddress) + "_" + (new Date()).getTime().toString(),
-        index,
-        result,
-        returnVal = {},
-        returnRemoveReg = /\r|\n/gm,
-        fileBuffer;
+  retrieve: function(key) {
+    var retVal = null;
     
+    retVal = this.post(key);
+    if(retVal) return retVal;
     
-    for(index in bodyParts) {
-      multiReg.lastIndex = 0;
-      result = multiReg.exec(bodyParts[index]);
-      //console.log(result);
-      if(result) {
-        if(returnVal[result[NAME_FIELD]]) {
-          returnVal[result[NAME_FIELD]] = [returnVal[result[NAME_FIELD]]];
-          returnVal[result[NAME_FIELD]].push(result[VALUE_FIELD].replace(returnRemoveReg, ""));
-        } else {
-          if(!result[FILENAME_FIELD]) {
-            //normal value here
-            returnVal[result[NAME_FIELD]] = result[VALUE_FIELD].replace(returnRemoveReg, "");
-          } else {
-
-            //got a file...
-            if(result[VALUE_FIELD].replace(returnRemoveReg, "").length > 0) {
-              fileBuffer = new Buffer(result[VALUE_FIELD], "binary");
-              if(fileBuffer.length <= parseInt(config.http.uploads.uploadLimit)) {
-                returnVal[result[NAME_FIELD]] = {
-                  fileName: result[FILENAME_FIELD],
-                  tempFile: IMVC.Utility.TempFileHandler.createTempFileSync(tempFolder, result[NAME_FIELD], fileBuffer),
-                  contentType: result[CONTENT_TYPE]
-                };
-              }
-            }
-            
-          }
-        }
-      }
-    }
+    retVal = this.file(key);
+    if(retVal) return retVal;
     
-    return returnVal;
+    retVal = this.query(key);
+    if(retVal) return retVal;
+    
+    retVal = this.route(key);
+    if(retVal) return retVal;
+    
+    return null;
   },
   
-  _parseMultipartII: function(body, boundary) {
-    var index = 0,
-        substring = "",
-        bodyParts = [];
+  retrieveAll: function() {
+    return COM.extend(this.postAll(), this.fileAll(), this.queryAll(), this.routeAll());
+  },
+  
+  post: function(key) {
+    var index;
     
-    for(index in body) {
-      substring += body[index];
-      if(substring.indexOf(boundary) !== -1) {
-        bodyParts.push(substring);
-        substring = "";
-        
-      }
+    for(index in this.postVals) {
+      if(index === key) return this.postVals[index];
     }
     
-    console.log(bodyParts.length);
+    return null;
   },
+  
+  postAll: function() {
+    return COM.extend({}, this.postVals);
+  },
+  
+  file: function(key) {
+    var index;
+    
+    for(index in this.fileVals) {
+      if(index === key) return this.fileVals[index];
+    }
+    
+    return null;
+  },
+  
+  fileAll: function() {
+    return COM.extend({}, this.fileVals);
+  },
+  
+  query: function(key) {
+    var index;
+    
+    for(index in this.queryVals) {
+      if(index === key) return this.queryVals[index];
+    }
+    
+    return null;
+  },
+  
+  queryAll: function() {
+    return COM.extend({}, this.queryVals);
+  },
+  
+  route: function(key) {
+    var index;
+    
+    for(index in this.routeVals) {
+      if(index === key) return this.routeVals[index];
+    }
+    
+    return null;
+  },
+  
+  routeAll: function() {
+    return COM.extend({}, this.routeVals);
+  },
+  
   
   _parsePlain: function(body) {
     var plainReg = IMVC.Http.Request._plainReg,

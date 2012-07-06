@@ -5,8 +5,8 @@ var fs = require("fs"),
     utility = require("../Utility");
 
 define("IMVC.Views.FileView").extend("IMVC.Views.View").assign({
-  FileView: function(viewFile, context) {
-    this.View(viewFile, context);
+  FileView: function(viewFile, context, statusCode) {
+    this.View(viewFile, context, statusCode);
   },
 
   render: function() {
@@ -31,6 +31,7 @@ define("IMVC.Views.FileView").extend("IMVC.Views.View").assign({
   finalizeOutput: function() {},
 
   display: function(fileData) {
+    this.context.response.writeHead(this.statusCode);
     this.context.response.end(fileData);
     this.viewComplete = true;
   }

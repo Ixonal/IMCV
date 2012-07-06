@@ -6,8 +6,10 @@
 </h1>
 <div class="ContentDiv">
   <%=message%>
+  <br/>
+  <%= ReverseRoute(IMVC.Controllers.SecureController, "login") %>
   <br/><br/>
-  <form action="/blah" method="post" enctype="text/plain">
+  <form action="/blah" method="post" enctype="multipart/form-data">
     <input type="text" name="something" /><br/>
     <input type="checkbox" name="isChecked" value="blah" /> blah<br/>
     <input type="checkbox" name="isChecked" value="more blah" /> more blah<br/>

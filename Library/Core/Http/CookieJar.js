@@ -68,6 +68,7 @@ define("IMVC.Http.CookieJar").assign({
           break;
         case "E":
           newCookie = new IMVC.Http.EncryptedCookie(temp2[1], temp[1]);
+          newCookie._encrypted = true;
           newCookie._decypher();
           break;
         default:
@@ -209,18 +210,39 @@ define("IMVC.Http.CookieJar").assign({
   },
   
   set: function(id, value) {
-    if(!this.cookies[id]) return this.add(new IMVC.Http.Cookie(id, value));
+    if(!this.cookies[id]){
+      this.loadCookie(id);
+      if(!this.cookies[id]) return this.add(new IMVC.Http.Cookie(id, value));
+    }
     
-    this.cookies[id].value = value;
+    this.cookies[id].setValue(value);
     return this.cookies[id];
   },
   
   add: function(cookie) {
-    if(this.cookies[cookie.getKey()]) return this.set(cookie.getKey(), cookie.getValue());
+    if(!Object.is(cookie, IMVC.Http.Cookie)) throw new Error("Only cookies can be added to the Cookie Jar.");
+    if(this.cookies[cookie.getKey()] ||
+       this.loadCookie(cookie.getKey())) return this.set(cookie.getKey(), cookie.getValue());
     
     this.cookies[cookie.getKey()] = cookie;
     return cookie;
-  }
+  },
+  
+  remove: overload(
+    [String],
+    function(id) {
+      
+      if(this.cookies[id]) {
+        destroy(this.cookies[id]);
+        delete this.cookies[id];        
+      }
+    },
+    
+    [IMVC.Http.Cookie],
+    function(cookie) {
+      this.remove(cookie.getKey());
+    }
+  )
 }).statics({
   TYPE_DELIMITER: "||",
   ASSIGNMENT_DELIMITER: "=",

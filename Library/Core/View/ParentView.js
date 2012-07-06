@@ -7,8 +7,8 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.ControllerView").assign({
   childView: null,
   childViewPlaceholder: null,
 
-  ParentView: function(viewFile, context, childView) {
-    this.ControllerView(viewFile, context);
+  ParentView: function(viewFile, context, childView, statusCode) {
+    this.ControllerView(viewFile, context, statusCode);
 
     this.childView = childView;
 
@@ -53,7 +53,7 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.ControllerView").assign({
       if(!_this.parentView) {
         viewDataCopy = COM.SCM.SubClassTree.extend({}, viewData);
         file = IMVC.Views.View.viewRoot + file;
-        _this.parentView = new IMVC.Views.ParentView(file, _this.request, _this.response, _this);
+        _this.parentView = new IMVC.Views.ParentView(file, _this.context, _this);
         _this.parentView.render(viewDataCopy);
       }
 
@@ -74,7 +74,7 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.ControllerView").assign({
         _this.outputString = ejsFunc(viewData);
         _this.fileLoaded(_this.viewFile);
       } catch(e) {
-        IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.request, _this.response, {error: e});
+        IMVC.Routing.Router.swapTo("IMVC.Controllers.Error", "500", _this.context, {error: e});
       }
     });
     this.fileIncluded(this.viewFile);
@@ -98,6 +98,16 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.ControllerView").assign({
 
   onFileIncluded: function(filename) {
     this.loadingFiles[filename] = true;
+  },
+  
+  getLowestChildView: function() {
+    var context = this;
+
+    while(context.childView) {
+      context = context.childView;
+    }
+
+    return context;
   },
 
   ready: function() {
