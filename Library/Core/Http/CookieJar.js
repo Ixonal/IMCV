@@ -2,32 +2,6 @@
 var crypto = require("crypto");
 
 require("./Cookie");
-//
-//var hasher = crypto.createHash("SHA512"),
-//    cipher = crypto.createCipher("AES256", "SOME_KEY"), 
-//    decipher = crypto.createDecipher("AES256", "SOME_KEY"),
-//    signer = crypto.createSign("DSA");
-//
-//var original = "blah";
-//
-//cipher.update(original, "utf8", "hex");
-//
-//var something = cipher.final("hex");
-//
-//decipher.update(something, "hex", "utf8");
-//
-//console.log(original);
-//
-//console.log(something);
-//
-//console.log(decipher.final("utf8"));
-//
-//console.log("----------------------");
-//
-//signer.update(original);
-//
-//console.log(signer.sign("SOME_KEY", "hex"));
-
 
 define("IMVC.Http.CookieJar").assign({
   //crypto: crypto,
@@ -130,8 +104,6 @@ define("IMVC.Http.CookieJar").assign({
                           CookieJar.FIELD_DELIMITER;
         }
         
-        //console.log(cookieString);
-
         responseHeader.push(cookieString);
       }
     }

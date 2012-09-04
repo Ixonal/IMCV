@@ -50,7 +50,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
 
     viewData = viewData || {};
 
-
+    viewData.context = _this.context;
     viewData.Helpers = IMVC.Views.Helpers;
     viewData.ReverseRoute = viewData._ = IMVC.Routing.Router.reverseRoute;
 
@@ -67,7 +67,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
           _this.includes[file] = (ejs.compile(fileData))(viewData);
           //special case concerning newlines in json
           if(_this.mimeType === "text/json") {
-            _this.includes[file] = _this.includes[file].replace(/\n\r/gm, "").replace(/\s+/g, " ");
+            _this.includes[file] = _this.includes[file].replace(/\n\r/gm, "").replace(/\s+/g, " ").replace(/"/g, "\\\"");
           }
           _this.fileLoaded(file);
         });
@@ -197,6 +197,7 @@ define("IMVC.Views.ControllerView").extend("IMVC.Views.View").assign({
 
     this.context.response.setHeader("Content-Type", this.mimeType);
     this.context.response.writeHead(this.statusCode);
+    this.context.response._headersSent = true;
     this.context.response.end(outputString);
     this.viewComplete = true;
     this.viewFinish();

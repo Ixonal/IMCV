@@ -36,7 +36,7 @@ define("IMVC.Views.ParentView").extend("IMVC.Views.ControllerView").assign({
           _this.includes[file] = (ejs.compile(fileData))(viewData);
           //special case concerning newlines in json
           if(_this.mimeType === "text/json") {
-            _this.includes[file] = _this.includes[file].replace(/\n\r/gm, "").replace(/\s+/g, " ");
+            _this.includes[file] = _this.includes[file].replace(/\n\r/gm, "").replace(/\s+/g, " ").replace(/"/g, "\\\"");
           }
           _this.fileLoaded(file);
         });

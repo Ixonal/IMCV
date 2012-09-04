@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>IMVC</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.wst.jsdt.core.javascriptValidator</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.wst.jsdt.core.jsNature</nature>
+	</natures>
+	<filteredResources>
+		<filter>
+			<id>1330742380966</id>
+			<name>Library/Core/Http/formidable</name>
+			<type>30</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.andFilterMatcher</id>
+			</matcher>
+		</filter>
+		<filter>
+			<id>0</id>
+			<name>Library/Core/Models/mongoose</name>
+			<type>30</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.andFilterMatcher</id>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1329019860874</id>
+			<name>Library/Core/View/ejs</name>
+			<type>30</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.andFilterMatcher</id>
+			</matcher>
+		</filter>
+	</filteredResources>
+</projectDescription>

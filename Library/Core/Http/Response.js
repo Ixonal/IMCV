@@ -4,6 +4,7 @@ require("../Utility/Securable");
 define("IMVC.Http.Response").extend("IMVC.Utility.Securable").assign({
   nodeResponse: null,
   _context: null,
+  _headersSent: false,
 
   Response: function(nodeResponse, isSecure) {
     this.Securable(isSecure);
@@ -15,6 +16,8 @@ define("IMVC.Http.Response").extend("IMVC.Utility.Securable").assign({
     [String],
     function(url) {
       var header = this._context.cookies.toResponseHeader();
+
+      this._headersSent = true;
       //console.log(header);
       this.setHeader("Set-Cookie", header);
       this.writeHead(302, {
@@ -96,6 +99,7 @@ define("IMVC.Http.Response").extend("IMVC.Utility.Securable").assign({
   },
 
   writeHead: function(statusCode, reasonPhrase, headers) {
+    this._headersSent = true;
     return this.nodeResponse.writeHead(statusCode, reasonPhrase, headers);
   },
 

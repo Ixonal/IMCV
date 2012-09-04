@@ -20,6 +20,7 @@ define("IMVC.Http.HttpContext").assign({
     
     this.cookies = new IMVC.Http.CookieJar(this);
     
+    
     var CID = this.getClientId();
     
     if(!CID) {
@@ -40,7 +41,6 @@ define("IMVC.Http.HttpContext").assign({
     }
     
     this.session = new IMVC.Http.Session(this, CID);
-    
   },
   
   getClientId: function() {

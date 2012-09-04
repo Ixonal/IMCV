@@ -52,7 +52,7 @@ define("IMVC.Routing.ControllerActionRoute").extend("IMVC.Routing.Route").assign
         actionName,
         action,
         index;
-
+    
     //populating the request's route hash
     if(routeInfo.routeVars) {
       for(index in routeInfo.routeVars) {

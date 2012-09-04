@@ -26,16 +26,16 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
         decypheredValue = "";
     
     try {
-      decypheredValue += decypher.update(this.getValue(), "hex", "ascii");
+      decypheredValue += decypher.update(this._value, "hex", "ascii");
       decypheredValue += decypher.final("ascii");
       
     } catch(e) {
-      IMVC.Logger.warn("A cookie was unable to be decrypted: " + this.getKey() + ", " + e.stack);
+      IMVC.Logger.warn("A cookie was unable to be decrypted: " + this._key + ", " + e.stack);
       decypheredValue = this.getValue();
     }
     
     this._encrypted = false;
-    this.setValue(decypheredValue);
+    this._value = decypheredValue;
   },
   
   _cypher: function() {
@@ -55,22 +55,29 @@ define("IMVC.Http.EncryptedCookie").extend("IMVC.Http.Cookie").assign({
         newVal = "";
     
     try {
-      newVal += cypher.update(this.getValue(), "ascii", "hex");
+      newVal += cypher.update(this._value, "ascii", "hex");
       newVal += cypher.final("hex");
     } catch(e) {
-      IMVC.Logger.warn("A cookie was unable to be encrypted: " + this.getKey() + ", " + e.toString());
+      IMVC.Logger.warn("A cookie was unable to be encrypted: " + this._key + ", " + e.toString());
       newVal = this.getValue();
     }
     
     this._encrypted = true;
-    this.setValue(newVal);
+    this._value = newVal;
   },
   
+  getValue: function() {
+    if(this._encrypted) {
+      this._decypher();
+    }
+    
+    return this._value;
+  },
   
   getResponseVal: function() {
     this._cypher();
     
-    return this.getValue();
+    return this._value;
   },
   
   getTypeCode: function() {

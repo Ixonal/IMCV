@@ -1,6 +1,6 @@
 
 define("IMVC.Controllers.Controller").assign({
-  isActive: false,
+  _isActive: false,
   actionName: null,
   context: null,
   viewLocals: null,
@@ -20,6 +20,8 @@ define("IMVC.Controllers.Controller").assign({
     
     this.context = context;
     this.viewLocals = {};
+    this._isActive = false;
+    this._isRedirecting = false;
 
     this.init = event(this);
     this.controllerFiring = event(this);
@@ -33,9 +35,11 @@ define("IMVC.Controllers.Controller").assign({
     });
     
     this.finalize.subscribe(function() {
-      this.context.response.setHeader("Set-Cookie", this.context.cookies.toResponseHeader());
+      if(!this.context.response._headersSent) {
+        this.context.response.setHeader("Set-Cookie", this.context.cookies.toResponseHeader());
+      }
     });
-
+    
   },
 
   fileNotFound: function() {
@@ -155,11 +159,10 @@ define("IMVC.Controllers.Controller").assign({
           //any checking that should be done before any action runs should be 
           //done here or in the controllerFiring event.
           nestingFunction = currentType.prototype[actionIndex] = function(otherVals) {
-            var _this = nestingFunction;
             
-            if(this.isActive) {
+            if(this._isActive) {
               if(this.actionName !== _this.getActionName()) {
-                this.context.response.redirect(this.getType().getClassName(), _this.getActionName(), COM.extend(this.context.request.retrieveAll(), otherVals));
+                this.context.response.redirect(this.getType().getClassName(), nestingFunction.getActionName(), COM.extend(this.context.request.retrieveAll(), otherVals));
                 this._isRedirecting = true;
                 return;
               }
@@ -169,17 +172,18 @@ define("IMVC.Controllers.Controller").assign({
             this.controllerFiring(nestingFunction);
 
             //set that the controller is active
-            this.isActive = true;
+            if(!this._isActive) {
+              this._isActive = true;
             
-            //run the inner function
-            actionToRun.call(this);
-
+              //run the inner function
+              actionToRun.call(this);
+            }
           }
           
           //returns the name of the action in question
           nestingFunction.getActionName = function() { return currentIndex; }
-          
-          
+          nestingFunction.getAction = function() { return actionToRun; }
+//          nestingFunction.getController = function() { return currentType; }
         })();
         
         

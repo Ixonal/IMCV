@@ -4,13 +4,18 @@ var crypto = require("crypto");
 define("IMVC.Controllers.Bouncer").assign({
   context: null,
   _error: null,
+  crypto: crypto,
   
   Bouncer: function(context) {
     this.context = context;
     this._error = "";
   },
   
-  userIsLoggedIn: function(loggedStatus) {
+  isUserLoggedIn: function() {
+    return this._setUserLoggedIn();
+  },
+  
+  _setUserLoggedIn: function(loggedStatus) {
     if(config.http.security.tokenLocation === "server") {
       return this._userLoggedInSession(loggedStatus);
     } else if(config.http.security.tokenLocation === "client") {
@@ -66,18 +71,21 @@ define("IMVC.Controllers.Bouncer").assign({
     return this.context.request.retrieve("password");
   },
   
-  authenticate: function(username, password) {
+  authenticate: function(username, password, callback) {
     if(!username) {
       this._error = "Username not defined";
-      return false;
+      callback(false);
+      //return false;
     }
     
     if(!password) {
       this._error = "Password not defined";
-      return false;
+      callback(false);
+      //return false;
     }
     
-    return true;
+    //return true;
+    callback(true);
   },
   
   success: function() {

@@ -144,7 +144,7 @@ if(global.ServerEvents) return;
       ServerEvents.connectedToDatabase();
     }
   } catch(e) {
-    IMVC.Logger.error("Unable to connect to the database: " + e.stack);
+    IMVC.Logger.error("Unable to connect to the database: " + e);
   }
   
   
@@ -271,11 +271,5 @@ if(global.ServerEvents) return;
   //});
   
   ServerEvents.appReady();
+
   
-  var test = new Models.ApplicationUser("test user");
-  
-  test.save();
-  
-  IMVC.Models.Repository.get(Models.ApplicationUser, function() {});
-  
-//});

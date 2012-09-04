@@ -15,11 +15,6 @@ define("IMVC.Http.Cookie").extend("IMVC.Utility.KeyValuePair").assign({
     this.KeyValuePair(key, value);
     if(!value.is(String)) throw new Error("Cookies can only store strings.");
     
-    //by default, will expire after a week
-//    if(typeof(expires) !== "number") {
-//      expires = 1000 * 60 * 60 * 24 * 7;
-//    }
-    
     this._modified = true;
     
     if(expires) {

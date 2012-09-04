@@ -35,7 +35,10 @@ define("IMVC.Http.Request").extend("IMVC.Utility.Securable").assign({
     
     var _this = this,
         urlObj = url.parse(this.getUrl(), true),
-        index;
+        index,
+        contentType = this.getHeader("content-type");
+    
+    if(!contentType) contentType = "text/plain";
     
     for(index in urlObj.query) {
       this.queryVals[index] = urlObj.query[index];
@@ -43,7 +46,7 @@ define("IMVC.Http.Request").extend("IMVC.Utility.Securable").assign({
     
     if(this.getMethod().toUpperCase() === "POST") {
       
-      if(this.getHeader("content-type").indexOf("text/plain") !== -1) {
+      if(contentType && contentType.indexOf("text/plain") !== -1) {
         //text/plain forms
         var body = "";
         

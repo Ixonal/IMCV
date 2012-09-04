@@ -321,19 +321,9 @@ global.global = global;
   
       //get a copy of the original prototype
       prototype = SubClassTree.extend({}, subClass.prototype);
-//      if(subClass.prototype.prototype) {
-//        prototype = SubClassTree.extend({}, subClass.prototype.prototype);
-//      } else {
-//        prototype = SubClassTree.extend({}, subClass.prototype);
-//      }
   
       //copy the prototype of the super class into this class's prototype (inheritance section)
       SubClassTree.extend(subClass.prototype, superClass.prototype);
-//      if(superClass.prototype.prototype) {
-//        SubClassTree.extend(subClass.prototype, superClass.prototype.prototype);
-//      } else {
-//        SubClassTree.extend(subClass.prototype, superClass.prototype);
-//      }
   
       //copy any overrides specific to this class (polymorphism section)
       SubClassTree.extend(subClass.prototype, prototype);
@@ -344,6 +334,40 @@ global.global = global;
       statics = SubClassTree.extend({}, subClass);
       SubClassTree.extend(subClass, superClass);
       SubClassTree.extend(subClass, statics);
+      
+      //adding a 'base' object
+      if(!subClass.__instanceBase) {
+        if(Object.defineProperty) {
+          Object.defineProperty(subClass, "__instanceBase", {
+            value: {},
+            writable: false,
+            enumerable: false,
+            configurable: false
+          });
+        } else {
+          subClass.__instanceBase = {}
+        }
+      }
+      
+      if(!subClass.__staticBase) {
+        if(Object.defineProperty) {
+          Object.defineProperty(subClass, "__staticBase", {
+            value: {},
+            writable: false,
+            enumerable: false,
+            configurable: false
+          });
+        } else {
+          subClass.__staticBase = {}
+        }
+      }
+      
+      SubClassTree.extend(subClass.__instanceBase, superClass.prototype);
+      SubClassTree.extend(subClass.__staticBase, superClass);
+      delete subClass.__staticBase.prototype;
+      delete subClass.__staticBase.constructor;
+//      delete subClass.__instanceBase[superClass.getClassName()];
+//      delete subClass.__instanceBase["_" + superClass.getClassName()];
     }
   };
   
@@ -677,6 +701,41 @@ global.global = global;
   //static object containing references to all class hierarchies
   var classHierarchy = {};
   
+  
+  var instanceBase = function(propertyName) {
+    var index, args = [];
+    
+    if(typeof(propertyName) !== "string") throw new Error("propertyName must be defined.");
+    
+    for(index = 1; index < arguments.length; index++) {
+      args[index - 1] = arguments[index];
+    }
+    
+    if(this.getType().__instanceBase && this.getType().__instanceBase[propertyName]) {
+      this.getType().__instanceBase[propertyName].apply(this, args);
+    }  else {
+      throw new Error("No base property with the given name exists.");
+    }
+  }
+  
+  var staticBase = function(propertyName) {
+    var index, args = [];
+    
+    if(typeof(propertyName) !== "string") throw new Error("propertyName must be defined.");
+    
+    for(index = 1; index < arguments.length; index++) {
+      args[index - 1] = arguments[index];
+    }
+    
+    if(this.getType().__staticBase && this.getType().__staticBase[propertyName]) {
+      this.getType().__staticBase[propertyName].apply(this, args);
+    }  else {
+      throw new Error("No base property with the given name exists.");
+    }
+  }
+  
+  
+  
 
   //created to allow for a more class-like interface
   function ClassObject(classNamespace, className, isAbstract) {
@@ -728,19 +787,15 @@ global.global = global;
 
 
     //class related utility functions
-    _this.classObj.getType = function() { return Type; }
-    _this.classObj.getClassName = /*_this.classObj.prototype.getClassName = */function() { return _this.className; }
-    _this.classObj.getClassNamespace = /*_this.classObj.prototype.getClassNamespace = */function() { return _this.classNamespace; }
-    _this.classObj.getClassPath = /*_this.classObj.prototype.getClassPath = */function() { return _this.classPath; }
-  
-    
-    _this.classHierarchy = classHierarchy[_this.classPath] = new ClassHierarchy(_this.classObj);
-    
-    
-    _this.classObj.is = _this.classObj.prototype.is = ClassObject.is;
+    var getType = function() { return _this.classObj; },
+        getTypeClass = function() { return Type; },
+        getClassName = function() { return _this.className; },
+        getClassNamespace = function() { return _this.classNamespace; },
+        getClassPath = function() { return _this.classPath; };
+        
     
     
-    _this.classObj.getConstructors = function() {
+    var getConstructors = function() {
       var constructors = {}, index, functionName;
       
       for(index in _this.classHierarchy.hierarchy) {
@@ -753,7 +808,7 @@ global.global = global;
       return constructors;
     }
     
-    _this.classObj.getDestructors = function() {
+    var getDestructors = function() {
       var destructors = {}, index, functionName;
       
       for(index in _this.classHierarchy.hierarchy) {
@@ -766,7 +821,7 @@ global.global = global;
       return destructors;
     }
     
-    _this.classObj.getMethods = function() {
+    var getMethods = function() {
       var constructors = _this.classObj.getConstructors(),
           destructors = _this.classObj.getDestructors(),
           index1, index2,
@@ -798,7 +853,7 @@ global.global = global;
       return functions;
     }
     
-    _this.classObj.getInheritingTypes = function() {
+    var getInheritingTypes = function() {
       var hierarchyIndex,
           currentHierarchy,
           inheritingTypes = {};
@@ -814,6 +869,107 @@ global.global = global;
       
       return inheritingTypes;
     }
+    
+    if(Object.defineProperty) {
+      
+      Object.defineProperty(_this.classObj.prototype, "base", {
+        value: instanceBase,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "base", {
+        value: staticBase,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj.prototype, "getType", {
+        value: getType,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getType", {
+        value: getTypeClass,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getClassName", {
+        value: getClassName,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getClassNamespace", {
+        value: getClassNamespace,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getClassPath", {
+        value: getClassPath,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "is", {
+        value: ClassObject.is,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj.prototype, "is", {
+        value: ClassObject.is,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getConstructors", {
+        value: getConstructors,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getDestructors", {
+        value: getDestructors,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getMethods", {
+        value: getMethods,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      Object.defineProperty(_this.classObj, "getInheritingTypes", {
+        value: getInheritingTypes,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
+      
+    } else {
+    
+      _this.classObj.base = staticBase;
+      _this.classObj.prototype.base = instanceBase;
+      _this.classObj.prototype.getType = getType;
+      _this.classObj.getType = getTypeClass;
+      _this.classObj.getClassName = getClassName;
+      _this.classObj.getClassNamespace = getClassNamespace
+      _this.classObj.getClassPath = getClassPath;
+      _this.classObj.is = _this.classObj.prototype.is = ClassObject.is;
+      _this.classObj.getConstructors = getConstructors;
+      _this.classObj.getDestructors = getDestructors;
+      _this.classObj.getMethods = getMethods;
+      _this.classObj.getInheritingTypes = getInheritingTypes;
+    }
+    
+
+    _this.classHierarchy = classHierarchy[_this.classPath] = new ClassHierarchy(_this.classObj);
+    
   
     return _this;
   }
@@ -935,13 +1091,12 @@ global.global = global;
   
     //if they give us an object, that must
     //be what we were looking for
-    if(typeof(namespace) === "object" ||
-       typeof(namespace) === "function") return namespace;
+    if(namespace.constructor === Object || namespace.constructor === Function) return namespace;
   
     //if we get anything but a string at this point,
     //there's really nothing to do with it
     if(typeof(namespace) !== "string") {
-      throw new Error("A namespace must be an object or string literal.");
+      throw new Error("The input parameter must be an Object or String.");
     }
   
     if(namespace.length == 0) return global;
@@ -1479,6 +1634,16 @@ global.global = global;
   COM.subClass = SubClassManager.subClass;
   COM.finalizeSubClass = SubClassManager.finalizeSubClass;
   
+  COM.define("COM.Hash").assign({
+    Hash: function(obj) {
+      if(obj.constructor !== Object) return;
+      
+      for(var index in obj) {
+        this[index] = obj[index];
+      }
+    }
+  });
+  
   if(!COMOptions.compatibility) {
     //moving important functions to the global namespace
     global["namespace"] = COM.namespace;
@@ -1500,6 +1665,8 @@ global.global = global;
     
     global["finalizeSubClass"] = COM.finalizeSubClass;
     global["subClass"] = COM.subClass;
+    
+    global["Hash"] = COM.Hash;
     
   }
 })(global);
